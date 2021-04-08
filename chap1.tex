@@ -6,58 +6,32 @@
 %% prompt when you run the file main.tex through LaTeX.
 \chapter{Introduction}
 
-Micro-optimization is a technique to reduce the overall operation count of
-floating point operations.  In a standard floating point unit, floating
-point operations are fairly high level, such as ``multiply'' and ``add'';
-in a micro floating point unit ($\mu$FPU), these have been broken down into
-their constituent low-level floating point operations on the mantissas and
-exponents of the floating point numbers.
+Websites which have user accounts traditionally use a password as their main form of authenticating the user. Usually the security assumption is that if an adversary does not have the user's password, the user is safe from any adversarial attacks. Despite being a reasonable method for security conceptually, authentication using only a password suffers in many areas in practice. There are many attack vectors in a password-only authentication schema that can compromise the user's password; the entire surface of the web-service is vulnerable. The adversary could launch a client-side attack by imitating the target website and trick the the user into submitting their password there. Alternatively, the adversary could hack into the user's web-browser or computer and record the keystrokes as the user types. Or the adversary could hack directly into the web-service backend and steal the passwords directly from there. \cite{TODO-a-paper-talking-about-different-types-of-password-attacks}.
 
-Chapter two describes the architecture of the $\mu$FPU unit, and the
-motivations for the design decisions made.
+\section{Two-Factor Authentication}
 
-Chapter three describes the design of the compiler, as well as how the
-optimizations discussed in section~\ref{ch1:opts} were implemented.
+% Should I talk about how 2FA uses cell-phone numbers/email address which can be broken into as well.
 
-Chapter four describes the purpose of test code that was compiled, and which
-statistics were gathered by running it through the simulator.  The purpose
-is to measure what effect the micro-optimizations had, compared to
-unoptimized code.  Possible future expansions to the project are also
-discussed.
+Security researchers have been well-aware of the gaping security risks of only using password authentication and thus have developed a security system called two-factor authentication \cite{TODO-2FA}. In its simplest form, upon account registration, the user not only picks a password, but also provides a secondary method for login authentication, usually through a hardware device. Then to login, the user must supply the password as well as phyiscally authenticate the login on their hardware authenticator. Two-factor authentication is safer than using only a password, since an adversary must now additionally poses the user's hardware authenticator in order to compromise their account. It is much harder to steal a physical hardware authenticator than it is to steal a password. Also, pulling such an operation off is time intensive, requires reconnosaince and coordination and is considerably difficult to scale at-large. 
 
-\section{Motivations for micro-optimization}
+Two-factor authentication certainly improves a website's security, but there is still room for improvement as it does not protect against a wide class of important threats. Most notably, two-factor authentication protects only the login event of a user's account. It assumes that all of the software on the user's computer is secure and not compromised. For example, if an adversary had control of a user's web-browser, once the user faithfully logged into their account, authorizing with two-factor authentication, the adversary could begin performing undesired operatoins on behalf of the logged in user from the compromised web-browser. Alternatively, if the operating system were compromised, it could intercept outgoing network packets and modify them to suit the adversary's needs rather than the user's. 
 
-The idea of micro-optimization is motivated by the recent trends in computer
-architecture towards low-level parallelism and small, pipelineable
-instruction sets \cite{patterson:risc,rad83}.  By getting rid of more
-complex instructions and concentrating on optimizing frequently used
-instructions, substantial increases in performance were realized.
+\section{Transaction Authentication}
 
-Another important motivation was the trend towards placing more of the
-burden of performance on the compiler.  Many of the new architectures depend
-on an intelligent, optimizing compiler in order to realize anywhere near
-their peak performance
-\cite{ellis:bulldog,pet87,coutant:precision-compilers}.  In these cases, the
-compiler not only is responsible for faithfully generating native code to
-match the source language, but also must be aware of instruction latencies,
-delayed branches, pipeline stages, and a multitude of other factors in order
-to generate fast code \cite{gib86}.
+A security mechanism needs to proctect against a stronger threat model in order to futher harden a website's security. The threat model can be extended to where most of the transmission chain: the host computer, the operating system, web-browser, network and any other intermediate system may be compromised. And even under such a far-reaching threat model, the security mechanism must prevent unauthorized adversial operation. What is assumed secure includes only the server code and hardware authenticator, as well as the entire registration event.
 
-Taking these ideas one step further, it seems that the floating point
-operations that are normally single, large instructions can be further broken
-down into smaller, simpler, faster instructions, with more control in the
-compiler and less in the hardware.  This is the idea behind a
-micro-optimizing FPU; break the floating point instructions down into their
-basic components and use a small, fast implementation, with a large part of
-the burden of hardware allocation and optimization shifted towards
-compile-time.
+Traditional two-factor authentication may be simply extended as proposed by the webauthn specification \cite{TODO-webauthn} released by the World-Wide-Web Consortium (W3C) to work within this new and more restrictive threat model to defend against the class of vulnerabilities not covered by traditional two-factor authentication. This extension is called transaction authentication (txAuthn), and its goal is to enable "high-risk" operations to be individually authenticated by the user's hardware authenticator, despite the user being already logged in.
 
-Along with the hardware speedups possible by using a $\mu$FPU, there are
-also optimizations that the compiler can perform on the code that is
-generated.  In a normal sequence of floating point operations, there are
-many hidden redundancies that can be eliminated by allowing the compiler to
-control the floating point operations down to their lowest level.  These
-optimizations are described in detail in section~\ref{ch1:opts}.
+A website, which assumes the more advanced threat model as described, would use transaction authentication to prevent any high-risk operations from being maliciously issued on behalf of the user. Such high-risk operations include, but are not limited to, deleting one's account, transferring money, managin administrative permissions, publishing important software releases, etc. 
+
+% TODO: Give more details in each example. 
+% Explain how txAuthn shows a message to the user, and the user authenticates on-device
+
+Although the webauthn describes transaction authentication in the protocol specification, no serious service has rolled out support for such functionality. Apart from not being integrated into real-world applications, there also has been no investigation into the implications of where transaction authentication fits well, where it is inhibitory or unnecessary, what it takes to support transaction authentication in web-service and any software system designs that work well to integrate and configure webauthn for an existing service.
+
+\iffalse
+but it is not void of vulnerabilities
+\fi
 
 \section{Description of micro-optimization}\label{ch1:opts}
 
