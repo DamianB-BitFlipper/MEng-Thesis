@@ -5,3 +5,8 @@
 *.toc
 *.info
 *.pdf
+*.blg
+*.bbl
+*.fls
+*.fdb_latexmk
+.#*

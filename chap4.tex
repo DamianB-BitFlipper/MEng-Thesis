@@ -1,0 +1,40 @@
+%% This is an example first chapter.  You should put chapter/appendix that you
+%% write into a separate file, and add a line \include{yourfilename} to
+%% main.tex, where `yourfilename.tex' is the name of the chapter/appendix file.
+%% You can process specific files by typing their names in at the 
+%% \files=
+%% prompt when you run the file main.tex through LaTeX.
+\chapter{Webauthn Firewall Design}
+
+The webauthn firewall acts as a Web Application Firewall (WAF). It is situated directly between the frontend and backend, processing all user requests sent between the two. Each requests gets parsed by the firewall, and understood whether it is a request that needs webauthn transaction authentication or not. If not, the request is simply proxied through to the backend without any extra work. However, if it needs transaction authentication, the firewall as a gatekeeper for that request. The firewall performs a verification procedure on the request and only upon success does the request pass through the firewall to the backend. If it fails, the firewall returns an error back to the frontend. This design strategy for integrating webauthn transaction authentication into a service is very powerful because it is web service agnostic. The backend is completely unaware that the requests it receives are webauthn authenticated. Of course, since the frontend has to interface with the user's hardware authenticator device, it must be aware of webauthn, but only to a minor extent. 
+
+\subsection{Proxying Requests}
+
+In multiple case studies, the firewall was used to integrate webauthn transaction authentication into two different paradigms of web service designs, RESTful and server-side rendered websites. For each, the notion of the firewall being situated between the frontend and backend is slightly different, but the function and role of the webauthn firewall is the same, filtering, verifying and proxying requests. For a RESTful web application, the placement of the firewall is more intuitive. In a RESTful design, frontend and backend are separate programs running on their own IP addresses and ports. The user's web-browser interacts with the frontend through its IP address. And whenever the frontend needs to interact with the backend, it launches HTTP requests to the IP address of the backend. In a RESTful web service design, the webauthn firewall naturally sits in between the two. The firewall runs on its own IP address and port, and the frontend is reconfigured to use it as its backend address destination. So when the frontend needs to issue a backend request, it sends it rather to firewall rather than the backend. From there, the firewall performs its role and, as necessary, proxies onward to the actual backend. Responses from the backend are returned to the firewall which automatically get forwarded on to the frontend. In a server-side rendering web application, the firewall additionally performs the role of the frontend described in the RESTful use case. That is, the user's web-browser interacts with the IP address of the firewall directly. All HTTP requests originate from the user's web-browser and are directed to whatever the address is of the frontend. In a server-side rendering web application, the whole service, the frontend and backend, is served out of the same address. With the webauthn firewall, requests get sent to the firewall which again does its role and, if necessary, relays onward to the server-side rendering web-application. In this case, the webauthn firewall is situated between the web-browser and backend. But nonetheless, it is the same principle as with the RESTful web application use case. An origin, in this case the web-browser, issues requests destined for a backend, but they get intercepted by the firewall, before they continue on if everything succeeds.
+
+\subsection{Webauthn Verification}
+
+% TODO: Make option in firewall to either pass through or block non-specified requests. Modify this paragraph
+% TODO: Explain basic webauthn txAuthn ecosystem
+
+As the webauthn firewall filters requests sent to it, some requests will be held back to be webauthn transaction authenticated first. Which requests get held back and how they get verified is configured in the firewall by the software engineer. In order to specify which HTTP route to filter out and transaction authenticated, the engineer simply includes the route in the firewall's configuration. All other routes not specified in the configuration are simply passed on through to the backend without any checks.
+
+\subsubsection{Authentication Message}
+
+Of the requests that need to be checked, the engineer must specify how they get verified. In essence, verifying an incoming HTTP request with transaction authentication involves the firewall generating an authentication message from the parameters of the request. Then the verification passes only if the generated message is exactly identical to the message signed by the hardware authenticator also included in the request and the associated signature is valid. The message generated by the firewall represents the root of truth and should encapsulate the entire intent of the request in order to have good security guarantees. All of the parameters in the requests that are considered security sensitive must appear unambiguously in the authentication message in a human readable format. Unambiguity refers to how no two different requests can share the same authentication message. Human readability is critical since the user is the one authenticating the message and sometimes the parameters in the request may be not human intelligible such as object IDs, etc.
+
+\subsubsection{Context Retrieval}
+
+% TODO gets context
+
+Where the HTTP request contains not human friendly identifiers that need to be understood by the user, those identifiers must be translated to their human readable counterparts. For example, an ID may identify some object in a web service. The firewall must generate...
+
+\iffalse
+is reconfigured to issue backend requests to the IP address
+
+Upon opening the web page, requests are issued from the web-browser
+
+has two options to specify how a route gets verified.
+
+This message should encapsulate 
+\fi

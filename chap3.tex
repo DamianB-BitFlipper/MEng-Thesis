@@ -1,0 +1,20 @@
+%% This is an example first chapter.  You should put chapter/appendix that you
+%% write into a separate file, and add a line \include{yourfilename} to
+%% main.tex, where `yourfilename.tex' is the name of the chapter/appendix file.
+%% You can process specific files by typing their names in at the 
+%% \files=
+%% prompt when you run the file main.tex through LaTeX.
+\chapter{Webauthn Transaction Authentication}
+
+Webauthn transaction authentication is a protocol specification for authenticating high-risk user operations, even after login. The specification describes a sequence of steps that must be followed in order to authenticate properly. These steps can be split into three stages, the setup, the cryptographic attestation and then the verification. The setup is initiated by the user's web-browser and involves an exchange between it and the webauthn validation end, the webauthn firewall in this case. The cryptographic attestation occurs between the user and hardware authenticator device. The threat model assumes that this interaction is always secure. Lastly, the verification stage occurs within the firewall, and it validates whether to authorize the high-risk user operation or not. This stage also is assumed secure under the threat model.
+
+\subsection{Transaction Authentication Setup}
+
+% TODO: Talk about server-side rendering preloading
+
+The setup for a transaction authenticate event originates at the web-browser. There are several designs to setup a webauthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the web-browser waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the web-browser preemptively initiates the setup, without knowing if the user will even perform any secured operation on the web-page. Nonetheless, the setup is simply an POST request to the firewall to retrieve a challenge nonce from the firewall. The firewall responds with the challenge and remembers it locally as a part of the session data associated with the request. The challenge nonce prevents replay attacks \cite{TODO-replay-attack}. % TODO Explain replay attacks
+
+\iffalse
+Setup can occur eagerly where the web-browser immediately performs the setup without the user initiating any operation protected by transaction authentication.
+
+\fi
