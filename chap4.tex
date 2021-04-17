@@ -26,7 +26,7 @@ In a server-side rendering web application, the firewall additionally performs t
 
 As the webauthn firewall filters requests sent to it, some requests will be held back to be webauthn transaction authenticated first. Which requests get held back and what their authentication messages are is configured in the firewall by the software engineer. In order to specify which HTTP route get filtered out and transaction authenticated, the engineer simply includes the route in the firewall's configuration. All other routes not specified in the configuration are simply passed on through to the backend without any checks.
 
-\subsubsection{Configuration Parameters}
+\subsubsection{Configuration Parameters}\label{Sec:ConfigurationParameters}
 
 The webauthn firewall has a number of configurable parameters that aid and dictate how routes get secured. The following is the firewall configuration for Conduit:
 
@@ -95,7 +95,7 @@ The \lstinline{ReverseProxyAddress} should be set to the address where the firew
 \noindent The third group is for context retrieval, explained in greater detail in Section~\ref{Sec:ContextRetrieval}. 
 
 \begin{itemize}[nosep]
-\item \lstinline{GetUserID}: A function that, given an HTTP request, extracts the current logged in user's ID. Since this is very application specific, it is up to the engineer to implement this function.
+\item \lstinline{GetUserID}: A function that, given an HTTP request, extracts the current logged in user's ID. Since this is very application specific, it is up to the engineer to implement this function. The example configuration above implements a function that extracts the current user's ID from the JSON Web Token (JWT) included in the HTTP request headers.
 
 \item \lstinline{ContextGetters}: A hash map of context tags and context getter functions. When the engineer sets up routes to protect, there is a clean way to invoke these functions by tag to retrieve more context as needed.
 \end{itemize}
@@ -222,19 +222,81 @@ There are a number of core webauthn operations that are constant regardless of t
 
 \subsubsection{Domain Specific Language}
 
-Following the default handlers, the majority of the firewall's routing configuration is performed using a domain specific language. 
+Following the default handlers, the majority of the firewall's routing configuration is performed using a domain specific language. Small chunks of code containing a domain specific program secure individual routes. Securing a route involves the \lstinline{Secure} function which takes at least three parameters. The function signature and sample usage from the Gogs firewall configuration follow:
 
+\begin{lstlisting}
+func (wfirewall *WebauthnFirewall) Secure(method, url string, 
+                                          handleFn HandlerFnType, 
+                                          optArgs ...FirewallSecureArgs)
 
+firewall.Secure("POST", "/user/settings/repositories/leave", firewall.Authn(
+        "Leave repository named: %v",
+        wf.SetContextVar("repo", wf.Get("id")),
+        wf.GetVar("repo").SubField("Name"),
+))
+\end{lstlisting}
 
-\subsection{Webauthn Verification}
+%% TODO: Maybe write somewhere that the firewall is written in Go
 
-\subsubsection{Authentication Message}\label{Sec:AuthenticationMessage}
+The \lstinline{method} and \lstinline{url} fields specify which URL and what HTTP verb on that route to filter out and secure. The \lstinline{handleFn} is the handler function to verify the webauthn transaction authentication event on this route. The common case is to write a domain specific program using the \lstinline{Authn} function to specify the format of the authentication message the handler should check. However, sometimes there are edge cases where the handler function has to manipulate or parse the incoming HTTP request in an atypical way. When the domain specific language cannot capture this behavior, the programmer can directly program a handler function utilizing the full power of the Go language. Section~\ref{Sec:AuthenticationMessage} explains is more detail how the authentication message should be formatted. The \lstinline{optArgs} is an optional variadic argument for customizable options to pass into \lstinline{Secure}. Currently, how the OPTIONS verb per route is customizable, but it is made to follow a generic \lstinline{FirewallSecureArgs} interface which is easily extendable. 
 
-Of the requests that need to be checked, the engineer must specify their authentication message format. In essence, verifying an incoming HTTP request with transaction authentication involves the firewall generating an authentication message from the parameters of the request. Then the verification passes only if the generated message is exactly identical to the message signed by the hardware authenticator and the signature is valid.
+The example above demonstrates how the \lstinline{Authn} function is used to write a simple domain specific program. This code snippet webauthn protects the route for a Gogs user leaving a Git repository as a collaborator. The first argument of \lstinline{Authn} is a the authentication message format string with format tags, in this case the \lstinline{"%v"}. 
 
-The message generated by the firewall represents the root of truth and should encapsulate the entire intent of the request in order to have good security guarantees. All of the parameters in the requests that are considered security sensitive must appear unambiguously in the authentication message in a human readable format. Unambiguity refers to how no two different requests should share the same authentication message. Human readability is critical since the user is the one authenticating the message and sometimes the parameters in the request may be not human intelligible such as object IDs, etc.
+The rest of the arguments make up the domain specific program. The DSL specification provides an assortment of operations. Some operations replace the format tags in order. Other operations do not affect the format string, but rather facilitate language functionality. 
+
+Domain specific language operations that affect the format string include the following. It is important to note that they only affect the authentication message format string if they are invoked at the top level within \lstinline{Authn}. If they are used as input arguments to other DSL operation, they simply return and pass on their value.
+
+\begin{itemize}[nosep]
+\item \lstinline{Get}: Retrieve a value from the HTTP request as per its default input getter explained in Section~\ref{Sec:ConfigurationParameters}.
+
+\item \lstinline{GetInt64}: Similar to \lstinline{Get}, but returns the value as an \lstinline{int64} type.
+
+\item \lstinline{GetArray}: Similar to \lstinline{Get}, but returns the value as an \lstinline|[]interface{}| array type.
+
+\item \lstinline{Get_Form}, \lstinline{Get_URL}, \lstinline{Get_JSON} and \lstinline{Get_URLParam}: Get functions that use specific default input getter functions. Each one of these operations has their respective \lstinline{int64} and \lstinline|[]interface{}| variants, eg: \lstinline{GetInt64_Form}, \lstinline{GetArray_Form}, etc.
+
+\item \lstinline{GetUserID}: Retrieve the current user's ID from the HTTP request. Internally performs a call to the \lstinline{GetUserID} function from the firewall configuration explained in Section~\ref{Sec:ConfigurationParameters}.
+
+\item \lstinline{GetContext}: Fetch some extra context by name using the context retrieval functions explained in Section~\ref{Sec:ContextRetrieval}. \\Example from Gogs: \lstinline{wf.GetContext("repo", wf.Get("id"))} gets Git repository by id.
+
+\item \lstinline{GetVar}: Retrieve a store value by variable name within the scope of the domain specific program. Variable are set by a few Set operations explained below.
+
+\item \lstinline{Apply}: Applies a Go function to outputs of DSL operations. The result of the function feeds into the format string.
+
+\end{itemize}
+
+\noindent Domain specific language operations that facilitate the DSL, but do not affect the format string include:
+
+\begin{itemize}[nosep]
+\item \lstinline{SetVar}: Creates a new variable in the scope of the domain specific program and sets a value to it. \\Example: \lstinline{wf.SetVar("id", wf.Get("id"))}.
+
+\item \lstinline{SetContextVar}: Shorthand for combining the output of a \lstinline{GetContext} into \lstinline{SetVar}. \\Example: \lstinline{wf.SetContextVar("repo", wf.Get("id"))} is equivalent to \\ \lstinline{wf.SetVar("repo", wf.GetContext("repo", wf.Get("id")))}.
+
+\item \lstinline{Log}: Logs values to the firewalls console. Useful for debugging. 
+
+\end{itemize}
+
+\noindent The following is a line-by-line explanation of the \lstinline{Authn} example presented above. It starts off with a format string \lstinline{"Leave repository named: %v"}. The second line retrieves a Git repository context based on the \lstinline{"id"} included in the HTTP request being protected. The repository context is stored within a variable named \lstinline{"repo"}. The third line retrieves the value of \lstinline{"repo"} and then indexes a sub-field named \lstinline{"Name"}. Since this \lstinline{GetVar} call is the first format string modifier operation to appear at the top-level of \lstinline{Authn}, it replaces the first \lstinline{"%v"} in the format string, in this case with the name of the repository.
+
+From there, the \lstinline{Authn} function wraps this domain specific program with all of the boilerplate code needed to verify the webauthn transaction. More details on the verification process are in Section~\ref{Sec:WebauthnFirewallVerification}.
 
 \iffalse
+ It happens to be a structure, so the name of the repository is  
+. It indexes further into the struct to get the
+
+affects the format string
+
+\fi
+
+\subsection{Authentication Message}\label{Sec:AuthenticationMessage}
+
+The engineer must specify the authentication message format for every request route that needs webauthn transaction authentication protection. In essence, verifying an incoming HTTP request with transaction authentication first begins with the firewall generating an authentication message from the parameters of the request. Then the verification passes only if the generated message is exactly identical to the message signed by the hardware authenticator and the signature is valid.
+
+The message generated by the firewall represents the root of trust and should encapsulate the entire intent of the request in order to have good security guarantees. All of the parameters in the requests that are considered security sensitive must appear unambiguously in the authentication message in a human readable format. Unambiguity refers to how no two different requests should share the same authentication message. Human readability is paramount since the user is the one authenticating the message and sometimes the parameters in the request may be not human intelligible such as item IDs, etc. The context retrieval functions from Section~\ref{Sec:ContextRetrieval} makes these identifiers into their human readable counterparts.
+
+\iffalse
+The requests that need to be webauthn verified, the engineer must specify their authentication message format. 
+
 is reconfigured to issue backend requests to the IP address
 
 Upon opening the web page, requests are issued from the web-browser

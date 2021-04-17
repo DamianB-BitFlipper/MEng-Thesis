@@ -89,7 +89,7 @@ const credential: PublicKeyCredential = {
 The \lstinline{clientDataJSON} contains the \lstinline{clientExtensions} which is the data displayed to the user as well as the \lstinline{challenge} from the setup stage. The cryptographic signature of the \lstinline{clientDataJSON} is included in the \lstinline{attestationObject} and uses the Elliptic Curve Digital Signature Algorithm (ECDSA) paired with the SHA-256 hash function. The other fields are for plumbing and help the firewall know what parameters to use to validate this authentication data object.
 \fi
 
-\subsection{Webauthn Firewall Verification}
+\subsection{Webauthn Firewall Verification}\label{Sec:WebauthnFirewallVerification}
 
 The webauthn firewall receives a protected HTTP request with all of its usual parameters plus the authentication data object. The firewall must verify the integrity of this object as well that it corresponds with the intent of the HTTP request. In other words, it must detect whether any code not in the secure threat model, such as the frontend, tampered with the authentication data. Also, it must make sure that the operation the user attested to on their hardware device that resulted in this authentication data object is in fact the operation to be performed if the protected HTTP request were to be permitted through. The three main steps of this verification are checking the challenge, the authentication message and the authentication data signature.
 
