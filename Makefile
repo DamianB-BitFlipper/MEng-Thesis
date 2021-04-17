@@ -1,3 +1,5 @@
+# From https://github.com/anishathalye/gemini/blob/master/Makefile
+
 .PHONY: main clean FORCE
 
 main: main.pdf

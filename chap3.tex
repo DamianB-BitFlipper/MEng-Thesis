@@ -6,15 +6,141 @@
 %% prompt when you run the file main.tex through LaTeX.
 \chapter{Webauthn Transaction Authentication}
 
-Webauthn transaction authentication is a protocol specification for authenticating high-risk user operations, even after login. The specification describes a sequence of steps that must be followed in order to authenticate properly. These steps can be split into three stages, the setup, the cryptographic attestation and then the verification. The setup is initiated by the user's web-browser and involves an exchange between it and the webauthn validation end, the webauthn firewall in this case. The cryptographic attestation occurs between the user and hardware authenticator device. The threat model assumes that this interaction is always secure. Lastly, the verification stage occurs within the firewall, and it validates whether to authorize the high-risk user operation or not. This stage also is assumed secure under the threat model.
+Webauthn transaction authentication is a protocol specification for authenticating high-risk user operations, even after login. The specification describes a sequence of steps that must be followed in order to authenticate properly. These steps can be split into four stages, registration, the setup, the cryptographic attestation and then the verification. Registration makes a record of the user and their cryptographic credential into the firewall and is performed only once per user. The setup is initiated by the user's web-browser and involves an exchange between it and the webauthn validation end, the webauthn firewall in this case. The cryptographic attestation occurs between the user and hardware authenticator device. The threat model assumes that this interaction is always secure. Lastly, the verification stage occurs within the firewall, and it validates whether to authorize the high-risk user operation or not. This stage also is assumed secure under the threat model.
+
+\subsection{Webauthn Registration}
+
+During the registration event, the user's hardware device sends its public key credential to the firewall. This process is completely secure in the threat model, with no adversary to intercept or tamper with any of the communication. Therefore, whatever credential the firewall receives during registration is assumed to be genuine and the user's. The firewall later on uses this credential during the verification stage to ensure transaction authentication integrity. The registration process begins with a setup of its own, where the web-browser requests a few parameters from the firewall, most notably a random challenge nonce.
+
+%% TODO: Have figure of webauthn registration exchange
+
+\iffalse
+\begin{lstlisting}
+type PublicKeyCredentialCreationOptions struct {
+	Challenge              Challenge                
+	RelyingParty           RelyingPartyEntity       
+	User                   UserEntity               
+	Parameters             []CredentialParameter
+	AuthenticatorSelection AuthenticatorSelection
+	Timeout                int                      
+	Attestation            ConveyancePreference
+}
+\end{lstlisting}
+\fi
+
+The firewall remembers the challenge it sent as a part of the session data associated with the registration setup request. The challenge nonce prevents replay attacks \cite{TODO-replay-attack}. There are a few other parameters, but they are mainly for the hardware device to know what type of credential the firewall is expecting to receive. The hardware device sends over its public key credential for the firewall to save, with the challenge signed by that credential. The firewall receives an HTTP POST request containing this public key credential. The POST request also contains identifying information of the current user. The firewall verifies that the challenge is matches, and upon success, stores the credential and associated user ID into a database row.
 
 \subsection{Transaction Authentication Setup}
 
 % TODO: Talk about server-side rendering preloading
 
-The setup for a transaction authenticate event originates at the web-browser. There are several designs to setup a webauthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the web-browser waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the web-browser preemptively initiates the setup, without knowing if the user will even perform any secured operation on the web-page. Nonetheless, the setup is simply an POST request to the firewall to retrieve a challenge nonce from the firewall. The firewall responds with the challenge and remembers it locally as a part of the session data associated with the request. The challenge nonce prevents replay attacks \cite{TODO-replay-attack}. % TODO Explain replay attacks
+The setup for a transaction authenticate event generally originates from the frontend. There are several designs to setup a webauthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the frontend waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the frontend preemptively initiates the setup, without knowing whether the user will even perform any secured operation on the web-page. Nonetheless, the setup is simply a POST request to the firewall. The payload for the setup POST request is an authentication message that will eventually be displayed to the user on their hardware device. The message is constructed from only the information contained in the HTML displayed to the user, but in all three case studies of this thesis, that was always enough. In response, the frontend receives a few parameters:
+
+%% TODO: Have figure of webauthn authentication exchange
 
 \iffalse
+\begin{lstlisting}
+type PublicKeyCredentialRequestOptions struct {
+	Challenge          Challenge                   
+	Timeout            int                         
+	RelyingPartyID     string                      
+	AllowedCredentials []CredentialDescriptor      
+	UserVerification   UserVerificationRequirement 
+	Extensions         AuthenticationExtensions    
+}
+\end{lstlisting}
+\fi
+
+Most importantly, a random \lstinline{challenge} nonce is returned. The firewall remembers it locally in the session data associated with the request. When the firewall processes the protected request, it will verify that the challenge included in the returned authentication data matches the one previously sent and remembered in the session. An adversary cannot intercept and replay old protected requests since it is exceedingly unlikely that future challenges from the firewall will exactly match the challenge in the intercepted request. 
+
+An \lstinline{extensions} field is also returned, following the webauthn protocol. The firewall took the authentication message sent to it and transformed it into a form which any webauthn-compatible hardware authenticator should handle as a transaction authentication operation.
+
+There are other fields returned as a part of the setup, but they are mostly for plumbing. They delineate how the hardware device should respond when authenticating the webauthn transaction.
+
+\iffalse
+The other fields are mostly for plumbing. The \lstinline{Timeout} requires an authentication response with that amount of time. The \lstinline{RelyingPartyID} identifies the backend. The \lstinline{AllowedCredentials} identifies with which cryptographic key the user can sign the response. The \lstinline{UserVerification} tells the hardware authenticator that the user must physically confirm ``yes'' or deny ``no'' a request and is usually set to \lstinline{true}. The \lstinline{Extensions} includes a signal that transaction authentication is to be performed with the authentication message sent to the firewall.
+\fi
+
+\subsection{Cryptographic Attestation}
+
+The request options from the firewall go through the frontend and are passed on to the hardware authenticator device. The threat model assumes that only the firewall, backend and hardware authenticator are secure. At any point, the frontend or web-browser could modify these options, but any tampering will be detected later on and denied authorization. The hardware device parses the request options, extracts from the \lstinline{extensions} field the authentication message and presents that to the user. The authentication message is in the form of a confirmation for some requested operation and is answered either by ``yes'' or ``no''. If the user attests ``yes'', the hardware device cryptographically signs a data object which is returned as an additional field within the protected HTTP request to the firewall for verification.
+
+The response of the hardware authenticator includes a \lstinline{clientDataJSON} object containing the authentication message displayed to the user a well as the \lstinline{Challenge} from the setup stage. A cryptographic signature of the \lstinline{clientDataJSON} is also included. Specifically, Elliptic Curve Digital Signature Algorithm (ECDSA) paired with the SHA-256 hash function is the signing function. There are other fields, as well, for plumbing to help the firewall know what parameters to use to validate this response.
+
+\iffalse
+% TODO: Make this typescript highlighting
+\begin{lstlisting}
+const credential: PublicKeyCredential = {
+    id: string, // base64 encoded
+    rawId: []bytes,
+    response: {
+        attestationObject: []bytes,
+        clientDataJSON: {
+            challenge: string, // base64 encoded
+            clientExtensions: []bytes,
+            hashAlgorithm: string,
+            origin: string,
+        },
+    },
+    type: 'public-key',
+};
+\end{lstlisting}
+
+The \lstinline{clientDataJSON} contains the \lstinline{clientExtensions} which is the data displayed to the user as well as the \lstinline{challenge} from the setup stage. The cryptographic signature of the \lstinline{clientDataJSON} is included in the \lstinline{attestationObject} and uses the Elliptic Curve Digital Signature Algorithm (ECDSA) paired with the SHA-256 hash function. The other fields are for plumbing and help the firewall know what parameters to use to validate this authentication data object.
+\fi
+
+\subsection{Webauthn Firewall Verification}
+
+The webauthn firewall receives a protected HTTP request with all of its usual parameters plus the authentication data object. The firewall must verify the integrity of this object as well that it corresponds with the intent of the HTTP request. In other words, it must detect whether any code not in the secure threat model, such as the frontend, tampered with the authentication data. Also, it must make sure that the operation the user attested to on their hardware device that resulted in this authentication data object is in fact the operation to be performed if the protected HTTP request were to be permitted through. The three main steps of this verification are checking the challenge, the authentication message and the authentication data signature.
+
+Checking the challenge is a simple comparison between the challenge received \lstinline{challenge} and the \lstinline{storedChallenge} in the firewall's session data. This protects against replay attacks.
+
+\begin{lstlisting}
+// Verify the challenge
+Challenge := c.ClientDataJSON.Challenge
+if strings.Compare(storedChallenge, Challenge) != 0 {
+	err := ErrVerification.WithDetails("Error validating challenge")
+	return err
+}
+\end{lstlisting}
+
+Checking the authentication message is slightly more involved. The firewall has to generate an expected authentication message based on the HTTP request parameters. This generated authentication message must unambiguously encapsulate the entire intent of the request. Details are further discussed in Section~\ref{Sec:AuthenticationMessage}. Then it is a simple comparison between the received \lstinline{clientMessage} and the \lstinline{generatedMessage}. This makes sure the user authenticated a message that faithfully represents the intent of the HTTP request.
+
+\begin{lstlisting}
+// Verify the authentication message
+clientMessage := c.ClientDataJSON.Extensions["txAuthnSimple"]
+if strings.Compare(generatedMessage, clientMessage) != 0 {
+	err := ErrVerification.WithDetails(
+              "Error validating authentication message")
+	return err
+}
+\end{lstlisting}
+
+Lastly, checking the authenticating data signature involves invoking some cryptography library utilities. This validates the integrity of the entire authentication object to prove that it was not tampered with. The \lstinline{clientDataJSON} was signed by the hardware authenticator. The firewall has the public key of the hardware authenticator, so it can see if the \lstinline{clientDataJSON} indeed corresponds to the signature attributed to it.
+
+\iffalse
+\begin{lstlisting}
+// Verify the signature
+
+// The data signed by the hardware authenticator
+clientDataHash := sha256.Sum256(c.ClientDataJSON)
+sigData := append(p.Raw.AssertionResponse.AuthenticatorData, 
+                  clientDataHash[:]...)
+
+// The user's public key stored in the firewall
+key, err := webauthncose.ParsePublicKey(credentialBytes)
+valid, err := webauthncose.VerifySignature(
+                 key, sigData, p.Response.Signature)
+if !valid {
+	return err
+}
+\end{lstlisting}
+
 Setup can occur eagerly where the web-browser immediately performs the setup without the user initiating any operation protected by transaction authentication.
 
+If not, it will deny the request from continuing through.
+
+The frontend only has access to the information it displays in the HTML to the user, 
+
+The data displayed to the user along with its respective signature is included in the \lstinline{response} field. The hardware device signs
 \fi
