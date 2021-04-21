@@ -1,0 +1,162 @@
+%% This is an example first chapter.  You should put chapter/appendix that you
+%% write into a separate file, and add a line \include{yourfilename} to
+%% main.tex, where `yourfilename.tex' is the name of the chapter/appendix file.
+%% You can process specific files by typing their names in at the 
+%% \files=
+%% prompt when you run the file main.tex through LaTeX.
+
+%% Topics:
+%% Frontend modifications
+%% Backend modifications
+%% Implementation overview of default handlers 
+%% Implementation of DSL and Authn function
+%%   How this plays with:
+%%   - default input getters
+%%   - context retrieval 
+
+\chapter{Webauthn Firewall Implementation}
+
+The webauthn firewall studied in this thesis is implemented in the Go programming language. This chapter describes how some of the critical components of the firewall's design detailed in Chapter~\ref{Chap:WebauthnFirewallDesign} are actually implemented.
+
+\section{Webauthn JavaScript Library}
+
+The webauthn JavaScript library provides easy access to the webauthn setup and verification life-cycle for the frontend. It exposes a few functions which take care of the boilerplate code. 
+
+The functions for setup are:
+
+\begin{lstlisting}
+const retrieveWebauthnOptions_FormField = async (form_id, field_name) => { ... }
+const retrieveWebauthnOptions_Cookie = async (src_cookie) => { ... }
+const retrieveWebauthnOptions_URL = async (form_id, src_url) => { ... }
+\end{lstlisting}
+
+They all access the setup data from the firewall by their respective payload types. The \lstinline{FormField} reads the data from a form in the current HTML page. The \lstinline{Cookie} reads the data from some cookie. And the most commonly used \lstinline{URL} performs a POST request and reads the setup data from the response.
+
+The functions for registration are:
+
+\begin{lstlisting}
+const registrationFinish_URL = async (credentialCreateOptionsFromServer, finish_url, form_id) => { ... }
+const registrationFinish_PostFn = async (credentialCreateOptionsFromServer, post_fn) => { ... }
+\end{lstlisting}
+
+They send over the hardware authenticator's credentials to the firewall during the registration event after the setup has been performed. Each performs the same processing procedure on the \lstinline{credentialCreateOptionsFromServer} webauthn options before issuing a POST request over to the firewall. The functions take the \lstinline{credentialCreateOptionsFromServer}, manipulate the encoding, get the hardware authenticator's credential and then package it into a clean JavaScript object. Fetching the hardware authenticator's credential is done with the web-browser exposing an API. The web-browser handles the interaction with the hardware device.
+
+\begin{lstlisting}
+const credential = await navigator.credentials.create({
+  publicKey: publicKeyCredentialCreateOptions
+});
+\end{lstlisting}
+
+The \lstinline{PostFn} function lets the caller specify a function, \lstinline{post_fn}, which performs the POST request instead of from the library as is the case with the \lstinline(URL) function.
+
+The functions for webauthn transaction authentication:
+
+\begin{lstlisting}
+const attestationFinish_URL = async (credentialRequestOptionsFromServer, finish_url, form_id) => { ... }
+const attestationFinish_PostFn = async (credentialRequestOptionsFromServer, post_fn) => { ... }
+\end{lstlisting}
+
+These functions are implemented nearly identically as their registration counterparts. The \lstinline{PostFn} function relies on a supplied \lstinline{post_fn} to issue the POST request whereas the \lstinline{URL} does it as a part of the library code. The primary difference is that the web-browser's API call is different.
+
+\begin{lstlisting}
+const assertion = await navigator.credentials.get({
+    publicKey: transformedCredentialRequestOptions,
+});
+\end{lstlisting}
+
+The \lstinline{transformedCredentialRequestOptions} contains all of the necessary transaction authentication setup information described in Section~\ref{Sec:TransactionAuthenticationSetup}, such as the challenge and the authentication message. This web-browser API call passes on that information to the hardware authenticator device. If the user confirms the operation on the hardware device, an \lstinline{assertion} is returned with the authentication data described in Section~\ref{Sec:WebauthnFirewallVerification}.
+
+\section{Webauthn Verification}\label{Sec:WebauthnVerification}
+
+The cryptographic verification of a webauthn transaction authentication event occurs within a slightly modified Go webauthn library \cite{TODO-Golang-Webauthn-Library}. This library exposes two functions, \lstinline{BeginLogin} and \lstinline{FinishLogin}, which are used to set up and validate a webauthn two-factor authentication event respectively. The library is modified to support the transaction authentication extension.
+
+The \lstinline{BeginLogin} call is invoked during the webauthn setup stage and is used straightforwardly.
+
+\begin{lstlisting}
+// Generate the webauthn `options` and `sessionData`
+options, sessionData, err := webauthnAPI.BeginLogin(wuser)
+if r.HandleError(w, err) {
+  return
+}
+
+\end{lstlisting}
+
+The \lstinline{wuser} is a webauthn user entry from the firewall's database store. It contains typical information such as the user's ID and public key credential. Returned are the \lstinline{options} that get sent back to the frontend and eventually the hardware authenticator as the result of the setup stage. The \lstinline{sessionData} is remembered by the firewall for the current HTTP request as described in Section~\ref{Sec:TransactionAuthenticationSetup}.
+
+The \lstinline{FinishLogin} call is invoked more selectively. If a user does not have webauthn currently enabled, that is they do not have a registered hardware device with the web-service, then routes that are webauthn protected should not check for webauthn for that user's requests. The following is a simplification of the webauthn transaction verifying code.
+
+\begin{lstlisting}
+// See if the user has webauthn enabled
+isEnabled := db.WebauthnStore.IsUserEnabled(db.QueryByUserID(userID))
+
+// Perform a webauthn check if webauthn is enabled for this user
+if isEnabled {
+  // Parse the form-data to retrieve the `http.Request` information
+  assertion, err := r.Get_WithErr("assertion")
+
+  // Get the `authnText` to verify against
+  authnText := getAuthnText(r)
+
+  // Populate the `extensions` with the `authnText`
+  extensions := make(protocol.AuthenticationExtensions)
+  extensions["txAuthSimple"] = authnText
+
+  // Load the session data
+  sessionData, err := sessionStore.GetWebauthnSession("authentication", r.Request)
+
+  // Perform the webauthn check
+  _, err = webauthnAPI.FinishLogin(wuser, sessionData, extensions, assertion)
+  if err != nil {
+    return false
+  }
+}
+\end{lstlisting}
+
+The code first checks if the current user has webauthn enabled. Then only if so does it proceed to extract the authentication data from \lstinline{r.Get_WithErr("assertion")}, generate the authentication message from \lstinline{getAuthnText} to validate against, retrieve the saved \lstinline{sessionData} and finally perform the cryptographic check with \lstinline{FinishLogin}.
+
+\section{Default Handlers}
+
+The webauthn firewall secures a number of core webauthn operations detailed in~\ref{Sec:DefaultHandlers}. Many of them can be grouped into having similar implementations.
+
+\begin{itemize}[nosep]
+\item \lstinline{webauthnIsEnabled} is the simplest. It retrieves the \lstinline{username} to check from the contents of the HTTP request. It then performs a database query on the user and returns whether they have webauthn enabled or not.
+
+\item \lstinline{beginRegister}, \lstinline{beginLogin} and \lstinline{beginAttestation} all are used during setup. The \lstinline{beginRegister} performs a call to the webauthn Go library function \lstinline{webauthnAPI.BeginRegistration}. The \lstinline{beginLogin} and \lstinline{beginAttestation} call \lstinline{webauthnAPI.BeginLogin} and follow the setup described in Section~\ref{Sec:WebauthnVerification}. 
+
+Whenever \lstinline{beginLogin} is called, the user has not logged into their account yet and this function should prepare a simple two-factor authentication event. So the \lstinline{r.Get_WithErr("username")} contained in the HTTP request is used to identify the current user and no authentication text is used. The \lstinline{beginAttestation} uses \lstinline{r.GetUserID()} described in Section~\ref{Sec:ConfigurationParameters} to get the current user and also begins a transaction authentication event with the authentication message in \lstinline{r.Get_WithErr("auth_text")}.
+
+All of these library calls return session data to be saved locally at the firewall and webauthn options data to be returned in response to the request.
+
+\item \lstinline{finishRegister}, \lstinline{finishLogin} and \lstinline{disableWebauthn} all call a finishing function. The \lstinline{finishRegister} calls \lstinline{webauthnAPI.FinishRegistration} which validates the HTTP register request and credentials. If all passes, then the credentials are saved in the firewall for the current user. The \lstinline{finishLogin} and \lstinline{disableWebauthn} both perform the same verification described in Section~\ref{Sec:WebauthnVerification} by calling \lstinline{webauthnAPI.FinishLogin}. The \lstinline{finishLogin} does not check any transaction authentication message since it is for simple two-factor authentication. The \lstinline{disableWebauthn} checks the authentication message \lstinline|"Confirm disable webauthn for {{ username }}"|.
+
+\iffalse
+first check if the user has webauthn enabled and then call \lstinline{webauthnAPI.BeginLogin}. Similarly as in Section~\ref{Sec:WebauthnVerification}, these Go library functions return session data to be saved locally at the firewall and a options data to be returned as a response to this request.
+\fi
+
+\end{itemize}
+
+\section{Domain Specific Language}
+
+Most routes in the firewall are secured using a domain specific language within the \lstinline{Auhtn} function described in Section~\ref{Sec:DomainSpecificLanguage}. Any domain specific program has a \lstinline{scope} hash map and a \lstinline{formatVars} array. The \lstinline{scope} maps strings standing for variable names to their respective contained values. The \lstinline{formatVars} array stores the values to apply sequentially to the format tags included in the first argument of \lstinline{Authn}.
+
+Only the domain specific operations that appear at the top-level of the \lstinline{Authn} may affect the authentication message. All other occurrences, such as arguments to other domain specific operations, simply return their respective values.
+
+Each DSL operation must implement an \lstinline{execute} and \lstinline{retrieve} function. The \lstinline{execute} function of a DSL operation only gets called whenever that operation is at the top-level. As a result, the operation has access to the \lstinline{formatVars} array. The type is as follows:
+
+\begin{lstlisting}
+execute(r *ExtendedRequest, scope scopeContainer, formatVars *[]interface{})
+\end{lstlisting}
+
+A call to \lstinline{execute} can use the request being authenticated and current \lstinline{scope} to add or remove variables from the \lstinline{scope} or append to the \lstinline{formatVars} array. Generally, the \lstinline{Get} type operations modify the \lstinline{formatVars} array and the \lstinline{Set} type operations modify the \lstinline{scope}. The \lstinline{execute} function gets called by \lstinline{Authn} as it runs the domain specific program.
+
+The \lstinline{retrieve} function of a DSL operation is used to extract a return value from the operation. Therefore, it does not receive the \lstinline{formatVars} array. The type is as follows:
+
+\begin{lstlisting}
+retrieve(r *ExtendedRequest, scope scopeContainer) interface{}
+\end{lstlisting}
+
+In contrast to the \lstinline{execute} function, the \lstinline{retrieve} function is called by other operations directly. Whenever a DSL operation is passed as an argument to another operation, the parent operation may call the child's \lstlisting{retrieve} in order to resolve a value. The \lstinline{retrieve} may use the HTTP request at hand and the current \lstinline{scope} to produce some return result.
+
+\iffalse
+
+\fi

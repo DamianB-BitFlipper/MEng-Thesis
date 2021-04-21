@@ -4,7 +4,9 @@
 %% You can process specific files by typing their names in at the 
 %% \files=
 %% prompt when you run the file main.tex through LaTeX.
-\chapter{Webauthn Firewall Design}
+\chapter{Webauthn Firewall Design}\label{Chap:WebauthnFirewallDesign}
+
+This chapter describes the high-level design of the webauthn firewall and how it fits within an existing web-application. It also describes how a software engineer would use the different configuration options and tools that the firewall provides in order to secure a web-service.
 
 The webauthn firewall acts as a Web Application Firewall (WAF). It is situated directly between the frontend and backend, processing all user requests sent between the two. Each requests gets parsed by the firewall, and understood whether it is a request that needs webauthn transaction authentication or not. If not, the request is simply proxied through to the backend without any extra work. However, if it needs transaction authentication, the firewall acts as a gatekeeper for that request. The firewall performs a verification procedure on the request and only upon success does the request pass through the firewall to the backend. If it fails, the firewall returns an error back to the frontend. This design strategy for integrating webauthn transaction authentication into a service is very powerful because it is web service agnostic. The backend is completely unaware that the requests it receives are webauthn authenticated. Of course, since the frontend has to interface with the user's hardware authenticator device, it must be aware of webauthn, but only to a minor extent. 
 
@@ -238,7 +240,7 @@ firewall.Secure("POST", "/user/settings/repositories/leave", firewall.Authn(
 
 %% TODO: Maybe write somewhere that the firewall is written in Go
 
-The \lstinline{method} and \lstinline{url} fields specify which URL and what HTTP verb on that route to filter out and secure. The \lstinline{handleFn} is the handler function to verify the webauthn transaction authentication event on this route. The common case is to write a domain specific program using the \lstinline{Authn} function to specify the format of the authentication message the handler should check. However, sometimes there are edge cases where the handler function has to manipulate or parse the incoming HTTP request in an atypical way. When the domain specific language cannot capture this behavior, the programmer can directly program a handler function utilizing the full power of the Go language. Section~\ref{Sec:AuthenticationMessage} explains is more detail how the authentication message should be formatted. The \lstinline{optArgs} is an optional variadic argument for customizable options to pass into \lstinline{Secure}. Currently, how the OPTIONS verb per route is customizable, but it is made to follow a generic \lstinline{FirewallSecureArgs} interface which is easily extendable. 
+The \lstinline{method} and \lstinline{url} fields specify which URL and what HTTP verb on that route to filter out and secure. The \lstinline{handleFn} is the handler function to verify the webauthn transaction authentication event on this route. The common case is to write a domain specific program using the \lstinline{Authn} function to specify the format of the authentication message the handler should check. However, sometimes there are edge cases where the handler function has to manipulate or parse the incoming HTTP request in an atypical way. When the domain specific language cannot capture this behavior, the programmer can directly program a custom handler, described in Section~\ref{Sec:CustomHandlers}, to utilize the full power of the Go programming language. Section~\ref{Sec:AuthenticationMessage} explains is more detail how the authentication message should be formatted. The \lstinline{optArgs} is an optional variadic argument for customizable options to pass into \lstinline{Secure}. Currently, how the OPTIONS verb per route is customizable, but it is made to follow a generic \lstinline{FirewallSecureArgs} interface which is easily extendable. 
 
 The example above demonstrates how the \lstinline{Authn} function is used to write a simple domain specific program. This code snippet webauthn protects the route for a Gogs user leaving a Git repository as a collaborator. The first argument of \lstinline{Authn} is a the authentication message format string with format tags, in this case the \lstinline{"%v"}. 
 
@@ -288,11 +290,99 @@ affects the format string
 
 \fi
 
+\subsubsection{Custom Handlers}\label{Sec:CustomHandlers}
+
+The webauthn firewall provides a domain specific language with broad capabilities. Most routes of a web-service can readily be secured using the \lstinline{Authn} function. However, occasionally some routes are more complicated to protect and fall outside of the capabilities of the domain specific language. In which case, the software engineer can implement a custom handler utilizing the full power of the Go programming language to secure those routes.
+
+Ultimately, the \lstinline{Secure} function accepts as its third argument a handler function or a predefined type. The custom handler simply has to adhere to that type. Common use cases for a custom handler is to perform some control flow decisions in its function body or sometimes gather external context information to assemble the authentication message in a particular way. Either way, the custom handler usually culminates in calling \lstinline{Authn} at the end, since it handles all of the boilerplate code to validate the webauthn transaction.
+
+The following is a simple custom handler from the Gogs firewall configuration. The Gogs web-service uses the same route for many different types of POST operations related to a repository's settings. Each operation type is identified by their \lstinline{"action"} field, and of them, the \lstinline{"delete"} is the only one of interest to protect.
+
+\begin{lstlisting}
+func (firewall *GogsFirewall) repoSettings(w http.ResponseWriter, 
+                                           r *wf.ExtendedRequest) {
+	// Parse the form-data to retrieve the `request` information
+	action := r.Get("action")
+
+	var handlerFn wf.HandlerFnType
+
+	switch action {
+	case "delete":
+		// Handle deletion separately
+		handlerFn = firewall.Authn(
+			"Confirm repository delete: %s/%s",
+			wf.Get_URL("username"),
+			wf.Get_URL("reponame"),
+		)
+	default:
+		// Proxy all other requests
+		handlerFn = firewall.ProxyRequest
+	}
+
+	// Run the `handlerFn`
+	handlerFn(w, r)
+	return
+}
+\end{lstlisting}
+
 \subsection{Authentication Message}\label{Sec:AuthenticationMessage}
 
 The engineer must specify the authentication message format for every request route that needs webauthn transaction authentication protection. In essence, verifying an incoming HTTP request with transaction authentication first begins with the firewall generating an authentication message from the parameters of the request. Then the verification passes only if the generated message is exactly identical to the message signed by the hardware authenticator and the signature is valid.
 
 The message generated by the firewall represents the root of trust and should encapsulate the entire intent of the request in order to have good security guarantees. All of the parameters in the requests that are considered security sensitive must appear unambiguously in the authentication message in a human readable format. Unambiguity refers to how no two different requests should share the same authentication message. Human readability is paramount since the user is the one authenticating the message and sometimes the parameters in the request may be not human intelligible such as item IDs, etc. The context retrieval functions from Section~\ref{Sec:ContextRetrieval} makes these identifiers into their human readable counterparts.
+
+\subsection{Frontend Modifications}
+
+One of the main objects of the webauthn firewall design is to minimize the intrusiveness of integrating webauthn into a web-service. Regardless, some modifications to the frontend are unavoidable as the frontend is the one to initiate any transaction authentication event. A webauthn transaction authentication event has a life-cycle of setup and verification detailed in Chapter~\ref{Chap:WebauthnTransactionAuthentication} which the frontend must support. In order to minimize frontend intrusiveness, a small webauthn JavaScript library included with this thesis handles all of the boilerplate code surrounding this life-cycle.
+
+The following two code snippets are from the Conduit fronend to delete a comment. The first is before this operation is transaction authentication secured and the latter is with webauthn. Although choosing to use webauthn does add some complexity, it is not untenable.
+
+\begin{lstlisting}
+agent.Comments.delete(this.props.slug, this.props.comment.id);
+\end{lstlisting}
+
+\begin{lstlisting}
+var webauthn_options = await agent.Webauthn.beginAttestation(
+  "Confirm comment delete: {0}".format(this.props.comment.body));
+
+// Perform the attestation event
+await attestationFinish_PostFn(
+  webauthn_options, 
+  (assertion) => {
+    payload = agent.Comments.delete(this.props.slug, 
+                                    this.props.comment.id,
+                                    assertion);
+  },
+);
+\end{lstlisting}
+
+In the webauthn code snippet, the first function call performs the setup which simply sends over a payload with an \lstinline{auth_text} field containing the client-side authentication message to be displayed on the hardware authenticator. The second function call is to the webauthn JavaScript library, which repackages the \lstinline{webauthn_options} as an \lstinline{assertion} object for the \lstinline{Comments.delete} function. The \lstinline{Comments.delete} function would be what the frontend invokes in order to delete a comment. In this case, it gets invoked additionally with \lstinline{assertion} in its payload.
+
+\iffalse
+initiates a transaction authentication event from the Conduit frontend to delete a comment.
+
+The first POST request performs the setup 
+
+when a user wants to change a website's address.
+
+in order to minimize the impact of this on the frontend.
+
+in order to properly support transaction authentication.
+
+Despite the efforts of the webauthn firewall design to minimize intrusiveness of integrating webauthn into a web-service, 
+
+The frontend of any web-service has to initiate a webauthn transaction authentication event.
+
+The frontend of any service using webauthn transaction authentication has to 
+
+When using a webauthn firewall to integrate transaction authentication into a web-service, the frontend has to include some 
+\fi
+
+\subsection{Backend Modifications}
+
+In contrast, the webauthn firewall excels in that it requires few if any backend modifications to integrate webauthn transaction authentication into a web-service. The firewall design intentionally situates itself in between the frontend and the backend and requests are proxied between the two such that the backend is unaware it is connected to the firewall rather than the frontend itself.
+
+Of all three case studies, the only backend modifications performed were for Gogs. As a server-side rendering application, there was no clean way for the firewall to do its context retrieval. In this case, the backend was modified to include a few server context routes to allow the firewall to query on. Even then, the modifications were minimal and pales in comparison to the intrusiveness and disorganization of integrating webauthn directly into the backend service.
 
 \iffalse
 The requests that need to be webauthn verified, the engineer must specify their authentication message format. 
