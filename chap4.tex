@@ -61,90 +61,113 @@ The webauthn firewall has a number of configurable parameters that aid and dicta
 
 The fields within the configuration are grouped by function. The first group, \lstinline{RPDisplayName} and \lstinline{RPID}, is used by the webauthn library when setting up and verifying transaction authentication events. 
 
-\noindent The second group contains the proxying address information. 
+%% TODO: Add a figure of the firewall address, frontend address and multiple possible backends
 
-\begin{itemize}[nosep]
-\item \lstinline{FrontendAddress}: Set to the frontend address. In a RESTful context, that is the frontend itself. In a server-side context, since the firewall functions as the frontend, it should be the firewall's address.
-
-\item \lstinline{ReverseProxyTargetMap}: A hash map of hosts and targets, along with their respective default input getters described in Section~\ref{Sec:DefaultInputGetters}. This field configures the firewall to catch requests of a given \lstinline{host} and forward it to a specific \lstinline{target}. There are separate default input getters since requests going to different hosts may have different representations of their payloads. The following code snippet is the \lstinline{ReverseProxyTargetMap} from the firewall configuration for Calypso.
-
-\item \lstinline{ReverseProxyAddress}: Set to the address where the firewall should attach and listen on.
-\end{itemize}
-
-\begin{lstlisting}
-// wf.NewProxyTarget(host, target, defaultInputGetter)
-reverseProxyTargetMap = 
-  wf.NewProxyTarget("public-api.wordpress.com", 
-                    "https://workaround-public-api.wordpress.com", 
-                    wf.GetJSONInput).
-  AnotherTarget("wordpress.com", 
-                "https://workaround.wordpress.com",
-                 wf.GetFormInput)
-\end{lstlisting}
-
-In this case, requests destined for \lstinline{"public-api.wordpress.com"} get forwarded to \\ \lstinline{"https://workaround-public-api.wordpress.com"} and have JSON payloads. Requests destined for \lstinline{"wordpress.com"} get forwarded to \lstinline{"https://workaround.wordpress.com"} and have form-data inputs. 
+The second group, \lstinline{FrontendAddress}, \lstinline{ReverseProxyTargetMap} and \lstinline{ReverseProxyAddress}, contains the proxying address information. They hold the address of the frontend, the target backends and the firewall itself, respectively. It is possible that a web-service's frontend accesses multiple backends. In which case, the firewall has to know which backend gets forwarded incoming requests after processing them. This is stored as a hash map of hosts and target backends in \lstinline{ReverseProxyTargetMap}. This field simply configures the firewall to catch requests of a given \lstinline{host} address and forward it to a specific \lstinline{target}.
 
 %% 
-\iffalse
-The \lstinline{FrontendAddress} should naturally be set to the
+%% \iffalse
+%% \begin{itemize}[nosep]
+%% \item \lstinline{FrontendAddress}: Set to the frontend address. In a RESTful context, that is the frontend itself. In a server-side context, since the firewall functions as the frontend, it should be the firewall's address.
 
-The \lstinline{ReverseProxyTargetMap} is a hash map of hosts and targets, along with their respective default input getters described in Section~\ref{Sec:DefaultInputGetters}. This field tells the firewall to catch requests of a given \lstinline{host} and forward it to a specific \lstinline{target}. There are separate default input getters since requests going to different hosts may have different representations of their payloads. The following is the \lstinline{ReverseProxyTargetMap} from the firewall configuration for Calypso:
+%% \item \lstinline{ReverseProxyTargetMap}: A hash map of hosts and targets, along with their respective default input getters described in Section~\ref{Sec:DefaultInputGetters}. This field configures the firewall to catch requests of a given \lstinline{host} and forward it to a specific \lstinline{target}. There are separate default input getters since requests going to different hosts may have different representations of their payloads. The following code snippet is the \lstinline{ReverseProxyTargetMap} from the firewall configuration for Calypso.
 
-The \lstinline{ReverseProxyAddress} should be set to the address where the firewall should attach itself and listen on.
-\fi
+%% \item \lstinline{ReverseProxyAddress}: Set to the address where the firewall should attach and listen on.
+%% \end{itemize}
+
+%% \begin{lstlisting}
+%% // wf.NewProxyTarget(host, target, defaultInputGetter)
+%% reverseProxyTargetMap = 
+%%   wf.NewProxyTarget("public-api.wordpress.com", 
+%%                     "https://workaround-public-api.wordpress.com", 
+%%                     wf.GetJSONInput).
+%%   AnotherTarget("wordpress.com", 
+%%                 "https://workaround.wordpress.com",
+%%                  wf.GetFormInput)
+%% \end{lstlisting}
+
+%% In this case, requests destined for \lstinline{"public-api.wordpress.com"} get forwarded to \\ \lstinline{"https://workaround-public-api.wordpress.com"} and have JSON payloads. Requests destined for \lstinline{"wordpress.com"} get forwarded to \lstinline{"https://workaround.wordpress.com"} and have form-data inputs. 
+%% \fi
 %% 
 
-\noindent The third group is for context retrieval, explained in greater detail in Section~\ref{Sec:ContextRetrieval}. 
-
-\begin{itemize}[nosep]
-\item \lstinline{GetUserID}: A function that, given an HTTP request, extracts the current logged in user's ID. Since this is very application specific, it is up to the engineer to implement this function. The example configuration above implements a function that extracts the current user's ID from the JSON Web Token (JWT) included in the HTTP request headers.
-
-\item \lstinline{ContextGetters}: A hash map of context tags and context getter functions. When the engineer sets up routes to protect, there is a clean way to invoke these functions by tag to retrieve more context as needed.
-\end{itemize}
-
 %% 
-\iffalse
+%% \iffalse
+%% The \lstinline{FrontendAddress} should naturally be set to the
 
-The \lstinline{GetUserID} is a function that, given an HTTP request, extracts the current logged in user's ID. Since this is very application specific, it is up to the engineer to implement this function. The \lstinline{ContextGetters} is a hash map of context tags and context getter functions. When the engineer sets up routes to protect, there is a clean way to invoke these functions by tag to retrieve more context as needed.
+%% The \lstinline{ReverseProxyTargetMap} is a hash map of hosts and targets, along with their respective default input getters described in Section~\ref{Sec:DefaultInputGetters}. This field tells the firewall to catch requests of a given \lstinline{host} and forward it to a specific \lstinline{target}. There are separate default input getters since requests going to different hosts may have different representations of their payloads. The following is the \lstinline{ReverseProxyTargetMap} from the firewall configuration for Calypso:
 
-\fi
+%% The \lstinline{ReverseProxyAddress} should be set to the address where the firewall should attach itself and listen on.
+%% \fi
 %% 
 
-\noindent The fourth group is to configure the default handlers, explained in more detail in Section~\ref{Sec:DefaultHandlers}. When integrating webauthn into a service, there are a number of operations that are a core part of the webauthn protocol. They are related to the webauthn registration event, the setup event, user login and webauthn disable. 
+The third group is for context retrieval, explained in greater detail in Section~\ref{Sec:ContextRetrieval}. During normal operation of the firewall, such as verifying incoming HTTP requests, it is often useful to identify the current user issuing that request. For example, the public key credential of a user are stored under their ID in the webauthn firewall's database. 
 
-\begin{itemize}[nosep]
-\item \lstinline{WebauthnCorePrefix}: Specifies the prefix for all URL routes of core webauthn events. In this case, for example, the webauthn setup route is found at \lstinline{"/api/webauthn/begin_attestation"}.
+Since getting the current user's ID is very application specific, the \lstinline{GetUserID} is left to the engineer to supply. The example configuration above implements a function that extracts the current user's ID from the JSON Web Token (JWT) included in the HTTP request headers.
 
-\item \lstinline{LoginURL}: The url route where the applications POSTs to during login.
+Constructing an authentication message oftentimes needs more context than supplied in the HTTP request. For example, a request may contain an object ID, but to construct the authentication message, the name of the object is needed. The \lstinline{ContextGetters} is a collection of context getter functions also supplied by the engineer. Then when setting up routes to protect, there is a clean way to invoke these functions to retrieve more context as needed.
 
-\item \lstinline{LoginGetUsername}: A special function that extracts the username from the login HTTP request's payload.
-
-\end{itemize}
 
 %% 
-\iffalse
+%% \iffalse
+%% \begin{itemize}[nosep]
+%% \item \lstinline{GetUserID}: A function that, given an HTTP request, extracts the current logged in user's ID. Since this is very application specific, it is up to the engineer to implement this function. The example configuration above implements a function that extracts the current user's ID from the JSON Web Token (JWT) included in the HTTP request headers.
 
-The \lstinline{WebauthnCorePrefix} specifies the prefix for all URL routes of core webauthn events. In this case, for example, the webauthn setup route is found at \lstinline{"/api/webauthn/begin_attestation"}. The \lstinline{LoginURL} is the url route where the applications POSTs to during login. The \lstinline{LoginGetUsername} is a special function that extracts the username from the login HTTP request's payload.
-
-\fi
+%% \item \lstinline{ContextGetters}: A hash map of context tags and context getter functions. When the engineer sets up routes to protect, there is a clean way to invoke these functions by tag to retrieve more context as needed.
+%% \end{itemize}
+%% \fi
 %% 
 
-\noindent The final group contains miscellaneous parameters.
+%% 
+%% \iffalse
 
-\begin{itemize}[nosep]
+%% The \lstinline{GetUserID} is a function that, given an HTTP request, extracts the current logged in user's ID. Since this is very application specific, it is up to the engineer to implement this function. The \lstinline{ContextGetters} is a hash map of context tags and context getter functions. When the engineer sets up routes to protect, there is a clean way to invoke these functions by tag to retrieve more context as needed.
 
-\item \lstinline{SupplyOptions}: A boolean flag specifying whether protected routes should respond with an HTTP OPTIONS verb or not.
+%% \fi
+%% 
 
-\item \lstinline{Verbose}: A boolean flag specifying whether the firewall should log the HTTP requests it processes.
-
-\end{itemize}
+The fourth group is to configure the default handlers, explained in more detail in Section~\ref{Sec:DefaultHandlers}. When integrating webauthn into a service, there are a number of operations that are a core part of the webauthn protocol. They are related to the webauthn registration event, the setup event, user login and webauthn disable. These fields provide the default handlers with just enough information such that they can be tailored for the given web-service.
 
 %% 
-\iffalse
+%% \iffalse
+%% \begin{itemize}[nosep]
+%% \item \lstinline{WebauthnCorePrefix}: Specifies the prefix for all URL routes of core webauthn events. In this case, for example, the webauthn setup route is found at \lstinline{"/api/webauthn/begin_attestation"}.
 
-The \lstinline{SupplyOptions} is a boolean flag specifying whether protected routes should respond with an HTTP OPTIONS verb or not. The \lstinline{Verbose} is a boolean flag specifying whether the firewall should log the HTTP requests it processes.
+%% \item \lstinline{LoginURL}: The url route where the applications POSTs to during login.
 
-\fi
+%% \item \lstinline{LoginGetUsername}: A special function that extracts the username from the login HTTP request's payload.
+
+%% \end{itemize}
+%% \fi
+%% 
+
+%% 
+%% \iffalse
+
+%% The \lstinline{WebauthnCorePrefix} specifies the prefix for all URL routes of core webauthn events. In this case, for example, the webauthn setup route is found at \lstinline{"/api/webauthn/begin_attestation"}. The \lstinline{LoginURL} is the url route where the applications POSTs to during login. The \lstinline{LoginGetUsername} is a special function that extracts the username from the login HTTP request's payload.
+
+%% \fi
+%% 
+
+The final group contains miscellaneous parameters. Sometimes a web-service's frontend expects the HTTP OPTIONS for every URL route it interacts with. The \lstinline{SupplyOptions} flag controls whether the firewall should supply OPTIONS for every protected route.
+
+%% 
+%% \iffalse
+%% \begin{itemize}[nosep]
+
+%% \item \lstinline{SupplyOptions}: A boolean flag specifying whether protected routes should respond with an HTTP OPTIONS verb or not.
+
+%% \item \lstinline{Verbose}: A boolean flag specifying whether the firewall should log the HTTP requests it processes.
+
+%% \end{itemize}
+%% \fi
+%% 
+
+%% 
+%% \iffalse
+
+%% The \lstinline{SupplyOptions} is a boolean flag specifying whether protected routes should respond with an HTTP OPTIONS verb or not. The \lstinline{Verbose} is a boolean flag specifying whether the firewall should log the HTTP requests it processes.
+
+%% \fi
 %% 
 
 \subsubsection{Default Input Getters}\label{Sec:DefaultInputGetters}
@@ -152,13 +175,13 @@ The \lstinline{SupplyOptions} is a boolean flag specifying whether protected rou
 An HTTP request may contain and encode its payload in a variety of ways. The firewall supplies four default input getter functions that extract values from requests in different formats. Each default input getter follows the same API, so new ones can be implemented quite easily as necessary. The getters include:
 
 \begin{itemize}[nosep]
-\item \lstinline{GetFormInput}: Parses form-data request payloads
+\item \lstinline{GetFormInput}: Parses form-data request payloads.
 
-\item \lstinline{GetURLInput}: Parses values stored in the HTTP request url. An example would be \lstinline{"/user/comment/6"} parsing the comment ID \lstinline{6} from the URL
+\item \lstinline{GetJSONInput}: Parses JSON request payloads.
 
-\item \lstinline{GetJSONInput}: Parses JSON request payloads
+\item \lstinline{GetURLInput}: Parses values stored in the HTTP request url. An example would be \lstinline{"/user/comment/6"} parsing the comment ID \lstinline{6} from the URL.
 
-\item \lstinline{GetURLParamInput}: Parses parameters passed along with the HTTP request url. An example would be \lstinline{"/user/comment?id=9"} parsing the comment ID \lstinline{9} from the URL
+\item \lstinline{GetURLParamInput}: Parses parameters passed along with the HTTP request url. An example would be \lstinline{"/user/comment?id=9"} parsing the comment ID \lstinline{9} from the URL.
 
 \end{itemize}
 
@@ -166,39 +189,47 @@ An HTTP request may contain and encode its payload in a variety of ways. The fir
 
 %% TODO maybe include some image, incoming ID in request, firewall gets context
 
-When an HTTP request contains non-human friendly identifiers that need to be understood by the user, those identifiers must be translated to their human readable counterparts. For example, an ID identifies a user's comment to a blog post in the Conduit application. Showing the ID in an authentication message is meaningless to the user. So rather the ID must be translated to the comment's title which the user can comprehend. This translation is handled by context getter functions programmed by the engineer. Generally, fetching context involves querying the backend for the extra information. This is necessary whenever the frontend does not have complete context of the items it displays. The following is a summarized code snippet of the Conduit comment context getter that accesses the backend.
+When an HTTP request contains non-human friendly identifiers that need to be understood by the user, those identifiers must be translated to their human readable counterparts. For example, an ID identifies a user's comment to a blog post in the Conduit application. Showing the ID in an authentication message is meaningless to the user. So rather the ID must be translated to the comment's title which the user can comprehend. This translation is handled by context getter functions programmed by the engineer. Generally, fetching context involves querying the backend for the extra information. This is necessary whenever the frontend does not have complete context of the items it displays. 
 
-\begin{lstlisting}
-func commentFromCommentID(args ...interface{}) interface{} {
-  var comments struct {
-    Comments []wf.StructContext `json:"comments"`
-  }
+%% 
+%% \iffalse
+%% The following is a summarized code snippet of the Conduit comment context getter that accesses the backend.
 
-  // Extract the `args` to meaningful variable names
-  slug := args[0].(string)
-  commentID := args[1].(int64)
+%% \begin{lstlisting}
+%% func commentFromCommentID(args ...interface{}) interface{} {
+%%   var comments struct {
+%%     Comments []wf.StructContext `json:"comments"`
+%%   }
 
-  // Perform the request to retrieve all of the comments for a given `slug`
-  url := fmt.Sprintf("%s/api/articles/%s/comments", backendAddress, slug)
-  tool.GetRequestJSON(url, &comments)
+%%   // Extract the `args` to meaningful variable names
+%%   slug := args[0].(string)
+%%   commentID := args[1].(int64)
 
-  // Search for the comment with `commentID`
-  for _, comment := range comments.Comments {
-    if comment["id"] == commentID {
-      return comment
-    }
-  }
+%%   // Perform the request to retrieve all of the comments for a given `slug`
+%%   url := fmt.Sprintf("%s/api/articles/%s/comments", backendAddress, slug)
+%%   tool.GetRequestJSON(url, &comments)
+
+%%   // Search for the comment with `commentID`
+%%   for _, comment := range comments.Comments {
+%%     if comment["id"] == commentID {
+%%       return comment
+%%     }
+%%   }
   
-  // Comment not found
-  return fmt.Errorf("Comment ID %d not found", commentID)
-}
-\end{lstlisting}
+%%   // Comment not found
+%%   return fmt.Errorf("Comment ID %d not found", commentID)
+%% }
+%% \end{lstlisting}
+%% \fi
+%% 
 
-\iffalse
+%% 
+%% \iffalse
 
-, and by consequence the firewall, do not have complete knowledge of the items they
+%% , and by consequence the firewall, do not have complete knowledge of the items they
 
-\fi
+%% \fi
+%% 
 
 \subsubsection{Default Handlers}\label{Sec:DefaultHandlers}
 
@@ -222,7 +253,7 @@ There are a number of core webauthn operations that are constant regardless of t
 
 \end{itemize}
 
-\subsubsection{Domain Specific Language}
+\subsubsection{Domain Specific Language}\label{Sec:DomainSpecificLanguage}
 
 Following the default handlers, the majority of the firewall's routing configuration is performed using a domain specific language. Small chunks of code containing a domain specific program secure individual routes. Securing a route involves the \lstinline{Secure} function which takes at least three parameters. The function signature and sample usage from the Gogs firewall configuration follow:
 

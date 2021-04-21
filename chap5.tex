@@ -155,7 +155,11 @@ The \lstinline{retrieve} function of a DSL operation is used to extract a return
 retrieve(r *ExtendedRequest, scope scopeContainer) interface{}
 \end{lstlisting}
 
-In contrast to the \lstinline{execute} function, the \lstinline{retrieve} function is called by other operations directly. Whenever a DSL operation is passed as an argument to another operation, the parent operation may call the child's \lstlisting{retrieve} in order to resolve a value. The \lstinline{retrieve} may use the HTTP request at hand and the current \lstinline{scope} to produce some return result.
+In contrast to the \lstinline{execute} function, the \lstinline{retrieve} function is called by other operations directly. Whenever a DSL operation is passed as an argument to another operation, the parent operation may call the child's \lstinline{retrieve} in order to resolve a value. The \lstinline{retrieve} may use the HTTP request at hand and the current \lstinline{scope} to produce some return result.
+
+When a DSL operation implements these two functions, it enables a hierarchical domain specific language. A DSL operation may be invoked by another operation.
+
+
 
 \iffalse
 
