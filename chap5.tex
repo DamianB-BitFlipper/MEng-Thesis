@@ -168,11 +168,23 @@ The webauthn firewall secures a number of core webauthn operations detailed in~\
 
 \section{Domain Specific Language}
 
-Most routes in the firewall are secured using a domain specific language within the \lstinline{Authn} function described in Section~\ref{Sec:DomainSpecificLanguage}. Any domain specific program has a \lstinline{scope} hash map and a \lstinline{formatVars} array. The \lstinline{scope} maps strings standing for variable names to their respective contained values. The \lstinline{formatVars} array stores the values to apply sequentially to the format tags included in the first argument of \lstinline{Authn}.
+Most routes in the firewall are secured using a domain specific language within the \lstinline{Authn} function described in Section~\ref{Sec:DomainSpecificLanguage}. Any domain specific program has local variables which may be set and accessed. They are stored in a \lstinline{scope} hash table which maps strings representing variable names to their respective contained values. As the domain specific program runs, it populates a \lstinline{formatVars} array. This array stores the values to apply sequentially to the format tags included in the first argument of \lstinline{Authn}.
 
-Only the domain specific operations that appear at the top-level of the \lstinline{Authn} may affect the authentication message. All other occurrences, such as arguments to other domain specific operations, simply return their respective values.
+%% 
+%% \iffalse
+%% has a \lstinline{scope} hash map and a \lstinline{formatVars} array. The \lstinline{scope} maps strings standing for variable names to their respective contained values. The \lstinline{formatVars} array stores the values to apply sequentially to the format tags included in the first argument of \lstinline{Authn}.
+%% \fi
+%% 
 
-Each DSL operation must implement an \lstinline{execute} and \lstinline{retrieve} function. The \lstinline{execute} function of a DSL operation only gets called whenever that operation is at the top-level. As a result, the operation has access to the \lstinline{formatVars} array. The type is as follows:
+The \lstinline{Authn} function receives DSL operations from its second argument onward. Only those operations that appear at the top-level of the \lstinline{Authn} may affect the authentication message. All other occurrences, such as arguments to other domain specific operations, simply return their respective values.
+
+Each DSL operation must implement an \lstinline{execute} and \lstinline{retrieve} function. The \lstinline{Authn} runs the domain specific program line-by-line by calling \lstinline{execute} of the top-level operations in order. Since the top-level operations may affect the authentication message, they have access to the \lstinline{formatVars} array. The function type of \lstinline{execute} is as follows:
+
+%% 
+%% \iffalse
+%% The \lstinline{execute} function of a DSL operation only gets called whenever that operation is at the top-level. As a result, the operation has access to the \lstinline{formatVars} array. The type is as follows:
+%% \fi
+%% 
 
 \begin{lstlisting}
 execute(r *ExtendedRequest, 
@@ -180,20 +192,26 @@ execute(r *ExtendedRequest,
         formatVars *[]interface{})
 \end{lstlisting}
 
-A call to \lstinline{execute} can use the request being authenticated and current \lstinline{scope} to add or remove variables from the \lstinline{scope} or append to the \lstinline{formatVars} array. Generally, the \lstinline{Get} type operations just modify the \lstinline{formatVars} array and the \lstinline{Set} type operations just modify the \lstinline{scope}. The \lstinline{execute} function gets called by \lstinline{Authn} as it runs the domain specific program line by line.
+A call to \lstinline{execute} can use the request being authenticated and current \lstinline{scope} to add or remove variables from the \lstinline{scope} or append to the \lstinline{formatVars} array. Table~\ref{Table:DSL_GetterOperations} outlines the \lstinline{Get} type operations that typically modify the \lstinline{formatVars} array. Table~\ref{Table:DSL_SetterOperations} outlines the \lstinline{Set} type operations that typically add new variables to the \lstinline{scope}.
 
-The \lstinline{retrieve} function of a DSL operation is used to extract a return value from the operation. It should have no effects on the format string and, therefore, does not receive the \lstinline{formatVars} array. The type is as follows:
+%% 
+%% \iffalse
+%% Generally, the \lstinline{Get} type operations just modify the \lstinline{formatVars} array and the \lstinline{Set} type operations just modify the \lstinline{scope}. The \lstinline{execute} function gets called by \lstinline{Authn} as it runs the domain specific program line by line.
+%% \fi
+%% 
+
+The \lstinline{retrieve} function of a DSL operation is used to extract a return value from the operation. In contrast to the \lstinline{execute} function, the \lstinline{retrieve} function is called by other operations directly. Whenever a DSL operation is passed as an argument to another operation, the parent operation may call the child's \lstinline{retrieve} in order to resolve the return value. It should have no effects on the format string and, therefore, does not receive the \lstinline{formatVars} array. The function type of \lstinline{retrieve} is as follows:
 
 \begin{lstlisting}
 retrieve(r *ExtendedRequest, scope scopeContainer) interface{}
 \end{lstlisting}
 
-In contrast to the \lstinline{execute} function, the \lstinline{retrieve} function is called by other operations directly. Whenever a DSL operation is passed as an argument to another operation, the parent operation may call the child's \lstinline{retrieve} in order to resolve the return value. 
-
 When a DSL operation implements these two functions, it enables a hierarchical domain specific language. A DSL operation may invoke other operations as arguments to it or be an argument to another operation. This chaining enables very flexible domain specific programs.
 
-\iffalse
-The \lstinline{retrieve} may use the HTTP request at hand and the current \lstinline{scope} to produce some return result.
+%% 
+%% \iffalse
+%% The \lstinline{retrieve} may use the HTTP request at hand and the current \lstinline{scope} to produce some return result.
 
-be invoked by another operation.
-\fi
+%% be invoked by another operation.
+%% \fi
+%% 

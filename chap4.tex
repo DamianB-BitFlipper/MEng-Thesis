@@ -76,7 +76,7 @@ The life cycle of an HTTP request begins with the firewall capturing and parsing
 \includegraphics[width=12cm]{firewall_configuration}
 \end{center}
 
-A number of components come together in the firewall to enable its function. There is a central configuration element for the whole firewall. A number of core webauthn routes are protected automatically. But the rest of the application specific routes are configured using a domain specific language or custom Go code. Configurations can be easily modified and completely define how the firewall webauthn secures a web-service.
+A number of components come together in the firewall to enable its function. There is a central configuration element for the whole firewall. A number of core webauthn routes are provided automatically. But the rest of the application specific routes are configured using a domain specific language or custom Go code. Configurations can be easily modified and completely define how the firewall webauthn secures a web-service.
 
 Apart from configuration ease, the design of a webauthn firewall is very powerful because it is minimally intrusive, almost transparent to the web-service it is securing. The backend is completely unaware that the requests it receives are webauthn authenticated. The frontend has to interface with the user's hardware authenticator device, so it must be aware of webauthn, but only to a minor extent. As a result, deployment of the webauthn firewall is simple and seamless.
 
@@ -117,9 +117,6 @@ The webauthn firewall has a number of configurable parameters that aid and dicta
 
 \begin{lstlisting}
   firewallConfigs := &wf.WebauthnFirewallConfig{
-    RPDisplayName: "Foobar Corp.",
-    RPID:          "localhost",
-
     FrontendAddress:       frontendAddress,
     ReverseProxyTargetMap: reverseProxyTargetMap,
     ReverseProxyAddress:   reverseProxyAddress,
@@ -136,9 +133,6 @@ The webauthn firewall has a number of configurable parameters that aid and dicta
     LoginGetUsername: func(r *wf.ExtendedRequest) (string, error) {
       return r.Get_WithErr("user", "username")
     },
-
-    SupplyOptions: true,
-    Verbose:       true,
   }
 \end{lstlisting}
 
