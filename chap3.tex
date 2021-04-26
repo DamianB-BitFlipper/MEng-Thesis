@@ -6,7 +6,15 @@
 %% prompt when you run the file main.tex through LaTeX.
 \chapter{Webauthn Transaction Authentication}\label{Chap:WebauthnTransactionAuthentication}
 
-Webauthn transaction authentication is a protocol specification for authenticating high-risk user operations, even after login. The specification describes a sequence of steps that must be followed in order to authenticate properly. These steps can be split into four stages, registration, the setup, the cryptographic attestation and then the verification. Registration makes a record of the user and their cryptographic credential into the firewall and is performed only once per user. The setup is initiated by the user's web-browser and involves an exchange between it and the webauthn validation end, the webauthn firewall in this case. The cryptographic attestation occurs between the user and hardware authenticator device. The threat model assumes that this interaction is always secure. Lastly, the verification stage occurs within the firewall, and it validates whether to authorize the high-risk user operation or not. This stage also is assumed secure under the threat model.
+%% TODO: replace firewall. This is the protocol, so make the description generic. Also, where is the `database store' located for registration?
+
+Webauthn transaction authentication is a protocol specification for authenticating high-risk user operations, even after login. The specification describes a sequence of steps that must be followed in order to authenticate properly. These steps can be split into four stages, registration, the setup, the cryptographic attestation and then the verification. Registration makes a record of the user and their cryptographic credential into a database store and is performed only once per user. The setup is initiated by the user's web-browser and involves an exchange between it and the webauthn validation end, the webauthn firewall in this case. The cryptographic attestation occurs on the hardware authenticator device after the user confirms the operation. The threat model assumes that this attestation is always secure. Lastly, the verification stage occurs within the firewall, and it validates whether to authorize the high-risk user operation or not. This stage also is assumed secure under the threat model.
+
+%% 
+%% \iffalse
+%% between the user and hardware authenticator device. 
+%% \fi
+%% 
 
 \subsection{Webauthn Registration}
 

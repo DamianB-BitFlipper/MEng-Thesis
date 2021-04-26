@@ -6,13 +6,71 @@
 %% prompt when you run the file main.tex through LaTeX.
 \chapter{Webauthn Firewall Design}\label{Chap:WebauthnFirewallDesign}
 
-This chapter describes the high-level design of the webauthn firewall and how it fits within an existing web-application. It also describes how a software engineer would use the different configuration options and tools that the firewall provides in order to secure a web-service.
+This chapter describes the high-level design and purpose of the webauthn firewall and how it fits within an existing web-application. It also describes how a software engineer would use the different configuration options and tools that the firewall provides in order to secure a web-service.
 
-\subsection{Overview}
+\section{Overview}
 
-The webauthn firewall acts as a Web Application Firewall (WAF). It is situated directly between the frontend and backend, processing all user requests sent between the two. Its main purpose is to simplify integrating webauthn transaction authentication into a web-service. Traditional methods of directly integrating webauthn into a web-service is bulky and difficult to configure. The firewall is designed to be highly configurable and minimally intrusive. The less code an engineer has to modify in the web-service itself, the better.
+The webauthn firewall acts as a Web Application Firewall. It is situated directly between the frontend and backend, processing all user requests sent between the two. At the highest-level, the purpose of the firewall is to map HTTP requests on protected routes to authentication messages and then verify those requests. To make the mapping and verification easier, the firewall provides many configurable options, a rich domain specific language and a collection of ready-made functions.
 
-The overall function of the firewall is to capture and parse HTTP requests between the frontend and backend. Then it must decide whether to verify those requests with transaction authentication or not. If not, the request is simply proxied through to the backend without any extra work. Otherwise, performs a verification procedure on the request and only upon success does the request pass through the firewall to the backend. Upon failure, the request is blocked.
+To illustrate this function, take the example of an HTTP request to delete an SSH key within Gogs named \lstinline{"Damian's SSH Key"}. The following is the HTTP request and relevant parts of its payload.
+
+\begin{lstlisting}
+route: "user/settings/ssh/delete",
+form-data: {
+  id: 2,
+  assertion: "<assertion data from hardware authenticator>"
+}
+\end{lstlisting}
+
+This request should map to a human readable authentication message, in particular: \lstinline{"Delete SSH key named: Damian's SSH Key"}. Notice that the HTTP request contains the ID of the SSH key, but not the name itself. The name is not present anywhere in the request, but can be contextualized by the ID from the backend as described in Section~\ref{Sec:ContextRetrieval}. The domain specific language and ready-made functions make this mapping and context retrieval significantly easier. The following code snippet is roughly what manually securing this route in regular Go would look like:
+
+\begin{lstlisting}
+func deleteSSHKey(w http.ResponseWriter, r *http.Request) {
+  id := int(r.Form["id"])
+  assertion := r.Form["assertion"]
+
+  // Retrieve the SSH key name of `id`
+  var sshKeyInfo struct {
+    KeyName string `json:"keyname"`
+  }
+  PerformRequestJSON(fmt.Sprintf("server_context/ssh_key/%d", id),
+                     &sshKeyInfo)
+
+  authText := fmt.Sprintf("Delete SSH key named: %s", 
+                          sshKeyInfo.KeyName)
+
+  // Check the `assertion` against the `authText`
+  FinishLogin(assertion, authText)
+}
+\end{lstlisting}
+
+The domain specific language and helper functions simplify this code greatly. Simpler code makes development and maintenance of the webauthn firewall much easier. The following is the actual firewall code that secures the SSH key deletion for Gogs:
+
+\begin{lstlisting}
+Secure("POST", "/user/settings/ssh/delete", Authn(
+  "Delete SSH key named: %v",
+  wf.SetContextVar("ssh_key", wf.Get("id")),
+  wf.GetVar("ssh_key").SubField("Name"),
+))
+\end{lstlisting}
+
+As demonstrated above, the traditional methods of directly integrating webauthn into a web-service are bulky and difficult to configure. The firewall is designed to be highly configurable and minimally intrusive. The less code an engineer has to modify in the web-service itself, the better.
+
+%% 
+%% \iffalse
+%% The chief task is to simplify integrating webauthn transaction authentication into a web-service.
+%% \fi
+%% 
+
+\subsection{Request Life Cycle}
+
+\begin{center}
+\includegraphics[width=12cm]{HTTP_request_flow}
+\end{center}
+
+The life cycle of an HTTP request begins with the firewall capturing and parsing it when it is sent from the frontend to the backend. Then the firewall decides whether to verify those requests with transaction authentication or not. If not, the request is simply proxied through to the backend without any extra work. Otherwise, performs a verification procedure on the request and only upon success does the request pass through the firewall to the backend. Upon failure, the request is blocked.
+
+\subsubsection{Configurable Components}
 
 \begin{center}
 \includegraphics[width=12cm]{firewall_configuration}
@@ -31,7 +89,7 @@ Apart from configuration ease, the design of a webauthn firewall is very powerfu
 %% \fi
 %% 
 
-\subsection{Proxying Requests}\label{Sec:ProxyingRequests}
+\section{Proxying Requests}\label{Sec:ProxyingRequests}
 
 In three different case studies, the firewall is used to integrate webauthn transaction authentication into two different paradigms of web service designs, RESTful and server-side rendered websites. For each, the notion of the firewall being situated between the frontend and backend is slightly different, but the function and role of the webauthn firewall is the same, filtering, verifying and proxying requests. 
 
@@ -47,13 +105,13 @@ For a RESTful web application, the placement of the firewall is more intuitive. 
 
 In a server-side rendering web application, the firewall additionally performs the role of the frontend described in the RESTful use case. That is, the user's web-browser interacts with the IP address of the firewall directly. All HTTP requests originate from the user's web-browser and are directed to whatever the address is of the frontend. In a server-side rendering web application, the whole service, the frontend and backend, is served out of the same address. With the webauthn firewall, requests get sent to the firewall which again does its role and, if necessary, relays onward to the server-side rendering web-application. In this case, the webauthn firewall is situated between the web-browser and backend. But nonetheless, it is the same principle as with the RESTful web application use case. An origin, in this case the web-browser, issues requests destined for a backend, but they get intercepted by the firewall, before they continue on if everything succeeds.
 
-\subsection{Webauthn Firewall Configuration}
+\section{Webauthn Firewall Configuration}
 
 %% TODO: Make option in firewall to either pass through or block non-specified requests. Modify this paragraph
 
 As the webauthn firewall filters requests sent to it, some requests will be held back to be webauthn transaction authenticated first. Which requests get held back and what their authentication messages are is configured in the firewall by the software engineer. In order to specify which HTTP route get filtered out and transaction authenticated, the engineer simply includes the route in the firewall's configuration. All other routes not specified in the configuration are simply passed on through to the backend without any checks.
 
-\subsubsection{Configuration Parameters}\label{Sec:ConfigurationParameters}
+\subsection{Configuration Parameters}\label{Sec:ConfigurationParameters}
 
 The webauthn firewall has a number of configurable parameters that aid and dictate how routes get secured. The following is the firewall configuration for Conduit:
 
@@ -197,7 +255,7 @@ The final group contains miscellaneous parameters. Sometimes a web-service's fro
 %% \fi
 %% 
 
-\subsubsection{Default Input Getters}\label{Sec:DefaultInputGetters}
+\subsection{Default Input Getters}\label{Sec:DefaultInputGetters}
 
 An HTTP request may contain and encode its payload in a variety of ways. The firewall supplies four default input getter functions that extract values from requests in different formats. Each default input getter follows the same API, so new ones can be implemented quite easily as necessary. The getters include:
 
@@ -212,7 +270,7 @@ An HTTP request may contain and encode its payload in a variety of ways. The fir
 
 \end{itemize}
 
-\subsubsection{Context Retrieval}\label{Sec:ContextRetrieval}
+\subsection{Context Retrieval}\label{Sec:ContextRetrieval}
 
 %% TODO maybe include some image, incoming ID in request, firewall gets context
 
@@ -258,7 +316,7 @@ When an HTTP request contains non-human friendly identifiers that need to be und
 %% \fi
 %% 
 
-\subsubsection{Default Handlers}\label{Sec:DefaultHandlers}
+\subsection{Default Handlers}\label{Sec:DefaultHandlers}
 
 There are a number of core webauthn operations that are constant regardless of the application. Every web-application wishing to use the firewall to integrate webauthn transaction authentication has to support webauthn registration, disabling (de-registration) and the setup phase of a transaction authentication event. The firewall also provides functions to handle simple webauthn two-factor authentication during login. Also, the frontend should be able to query the firewall to see if a user has webauthn enabled or not. This is primarily used in the security settings panel of the frontend to determine whether to  have an \lstinline{"Enable Webauthn"} or \lstinline{"Disable Webauthn"} button.
 
@@ -288,7 +346,7 @@ There are a number of core webauthn operations that are constant regardless of t
 %% \fi
 %% 
 
-\subsubsection{Domain Specific Language}\label{Sec:DomainSpecificLanguage}
+\subsection{Domain Specific Language}\label{Sec:DomainSpecificLanguage}
 
 The majority of the firewall's routing configuration is performed using a domain specific language. Small chunks of code containing domain specific programs secure individual routes. Securing a route involves a \lstinline{Secure} function which takes three parameters. Two parameters, \lstinline{url} and \lstinline{method}, specify which route and which HTTP verb requests (such as POST, GET, etc.) on said route to intercept. The last parameter is a handler function, \lstinline{handleFn} which verifies the webauthn transaction authentication event on that route. 
 
@@ -419,7 +477,7 @@ From there, the \lstinline{Authn} function wraps this domain specific program wi
 %% \fi
 %% 
 
-\subsubsection{Custom Handlers}\label{Sec:CustomHandlers}
+\subsection{Custom Handlers}\label{Sec:CustomHandlers}
 
 The webauthn firewall provides a domain specific language with broad capabilities which usually can secure most routes of a web-service. However, occasionally some routes are more complicated to protect and fall outside of the capabilities of the domain specific language. In which case, the software engineer can implement a custom handler utilizing the full power of the Go programming language to secure those routes.
 
@@ -465,13 +523,13 @@ A custom handler is used in the Gogs web-service. Gogs uses the same route for m
 %% \fi
 %% 
 
-\subsection{Authentication Message}\label{Sec:AuthenticationMessage}
+\section{Authentication Message}\label{Sec:AuthenticationMessage}
 
 The engineer must specify the authentication message format for every request route that needs webauthn transaction authentication protection. In essence, verifying an incoming HTTP request with transaction authentication first begins with the firewall generating an authentication message from the parameters of the request. Then the verification passes only if the generated message is exactly identical to the message signed by the hardware authenticator and the signature is valid.
 
 The message generated by the firewall represents the root of trust and should encapsulate the entire intent of the request in order to have good security guarantees. All of the parameters in the requests that are considered security sensitive must appear unambiguously in the authentication message in a human readable format. Unambiguity refers to how no two different requests should share the same authentication message. Human readability is paramount since the user is the one authenticating the message and sometimes the parameters in the request may be not human intelligible such as item IDs, etc. The context retrieval functions from Section~\ref{Sec:ContextRetrieval} makes these identifiers into their human readable counterparts.
 
-\subsection{Frontend Modifications}
+\section{Frontend Modifications}
 
 One of the main objectives of the webauthn firewall design is to minimize the intrusiveness of integrating webauthn into a web-service. Regardless, some modifications to the frontend are unavoidable as the frontend is the one to initiate any transaction authentication event. A webauthn transaction authentication event has a life-cycle of setup and verification detailed in Chapter~\ref{Chap:WebauthnTransactionAuthentication} which the frontend must support. In order to minimize frontend intrusiveness, a small webauthn JavaScript library included with the firewall handles all of the frontend boilerplate code surrounding this life-cycle. Every endpoint in the frontend that launches transaction authentication requests may use this library to lighten the programming burden of integrating webauthn. Although choosing to add webauthn to a web-service does add some complexity on the frontend, this library makes it tenable.
 
@@ -524,7 +582,7 @@ One of the main objectives of the webauthn firewall design is to minimize the in
 %% \fi
 %% 
 
-\subsection{Backend Modifications}
+\section{Backend Modifications}
 
 In contrast, the webauthn firewall excels in that it requires few if any backend modifications to integrate webauthn transaction authentication into a web-service. The firewall design intentionally situates itself in between the frontend and the backend and requests are proxied between the two such that the backend is unaware it is connected to the firewall rather than the frontend itself.
 
