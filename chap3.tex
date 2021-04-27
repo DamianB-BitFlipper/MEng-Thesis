@@ -32,9 +32,11 @@ This outline for transaction authentication uses the webauthn firewall as the ve
 
 \subsection{Webauthn Registration}
 
-During the registration event, the user's hardware device sends its public key credential to the firewall. This process is completely secure in the threat model, with no adversary to intercept or tamper with any of the communication. Therefore, whatever credential the firewall receives during registration is assumed to be genuine and the user's. The firewall later on uses this credential during the verification stage to ensure transaction authentication integrity. The registration process begins with a setup of its own, where the web-browser requests a few parameters from the firewall, most notably a random challenge nonce.
+\begin{center}
+\includegraphics[width=12cm]{registration_flow}
+\end{center}
 
-%% TODO: Have figure of webauthn registration exchange
+During the registration event, the user's hardware device sends its public key credential to the firewall. This process is completely secure in the threat model, with no adversary to intercept or tamper with any of the communication. Therefore, whatever credential the firewall receives during registration is assumed to be genuine and the user's. The firewall later on uses this credential during the verification stage to ensure transaction authentication integrity. The registration process begins with a setup of its own, where the web-browser requests a few parameters from the firewall, most notably a random challenge nonce.
 
 %% 
 %% \iffalse
@@ -56,11 +58,13 @@ The firewall remembers the challenge it sent as a part of the session data assoc
 
 \subsection{Transaction Authentication Setup}\label{Sec:TransactionAuthenticationSetup}
 
+\begin{center}
+\includegraphics[width=15cm]{txauthn_flow}
+\end{center}
+
 % TODO: Talk about server-side rendering preloading
 
 The setup for a transaction authenticate event generally originates from the frontend. There are several designs to setup a webauthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the frontend waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the frontend preemptively initiates the setup, without knowing whether the user will even perform any secured operation on the web-page. Nonetheless, the setup is a POST request to the firewall. The payload for the setup POST request is an authentication message that will eventually be displayed to the user on their hardware device. The message is constructed from any user input and any additional information contained in the HTML of the webpage, but in all three case studies of this thesis, that was always enough. In response, the frontend receives a few parameters:
-
-%% TODO: Have figure of webauthn authentication exchange
 
 %% 
 %% \iffalse
