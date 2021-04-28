@@ -7,15 +7,51 @@
 \chapter{Related Work}
 
 % TODO: Maybe explain what external observation and internal observation are
+\subsection{Hardware Authenticators for \newline Two-Factor Authentication}\label{Sec:HardwareAuthenticators_2FA}
 
-The state of the art for using hardware devices for website authentication is two-factor authentication. Websites that support two-factor authentication simply request the secondary mode of authentication during login, in addition to supplying a password. Two-factor authentication solves the security problems for login quite well \cite{TODO-quest-to-remove-passwords}. Depending on the implementation of the specific hardware device, most provide strong resilience to impersonation, external observation, internal observation, leakage of data secrets, third-party trust, etc. However, as explained previously, these benefits do not pertain beyond the login point of a website and assume a weaker threat model. The adversary could simply wait for the user to faithfully log in, and then launch their planned attack. 
+The state of the art for using hardware devices for website authentication is two-factor authentication. These devices such as the YubiKey \cite{https://www.yubico.com/products/} resemble a small USB key which stores a private key on device. Websites that support two-factor authentication simply request the secondary mode of authentication during login. Two-factor authentication solves the security problems for login quite well \cite{TODO-quest-to-remove-passwords}. Depending on the implementation of the specific hardware device, most provide strong resilience to targeted impersonation, physical observation, internal observation, leakage of data secrets, relying on a trusted third-party, etc. However, as explained previously, these benefits do not pertain beyond the login point of a website and assume a lenient threat model. The adversary could simply wait for the user to faithfully log in and then launch their planned attack. 
 
-This research builds on top of the description of transaction authentication as outlined by the first version of the webauthn specification \cite{webauthn}. The webauthn specification is a comprehensive document, standardizing a protocol for two-factor authentication with configurable extensions. The protocol covers in detail how traditional two-factor authentication should be performed under webauthn as well as details how to extend it to perform transaction authentication. Transaction authentication is similar to a regular two-factor authentication event, just with some additional user involvement; the user must confirm a given transaction on a dedicated hardware device for the authentication to proceed. 
+%% 
+%% \iffalse
+%% , in addition to supplying a password. 
+%% \fi
+%% 
 
-The purpose of transaction authentication in the eyes of the webauthn specification authors is to provide integrity to high risk operations on a website. In fact, further papers including \cite{EuroFIDO} detail use-cases of webauthn transaction authentication such as authorizing large value monetary transactions, consenting to data being shared with a third-party and authorizing a trusted service to sign a digital contract. All of these operations are very important and requesting individual authentication for each may be warranted. 
+A number of specifications standardize two-factor authentication so that the same hardware authenticator device may be used across platforms and web-services. A popular standard is Universal 2nd Factor (U2F) \cite{https://www.yubico.com/authentication-standards/fido-u2f/} developed by Google and Yubico, now hosted by the open-authentication industry consortium FIDO (``Fast IDentity Online'') Alliance. It is succeeded by FIDO2 \cite{https://fidoalliance.org/fido2/} which merges webauthn and its extensions, including transaction authentication, into one common standard.
 
-It appears that the state of the art for known security benefits through transaction authentication ends there. There is no research detailing how webauthn transaction authentication should be integrated into a service, what are good design choices in doing so or what the engineer should keep in mind in order to avoid accidental security holes.
+\subsection{Current Uses of Transaction Authentication}\label{Sec:CurrentUses_txAuthn}
 
-\iffalse
+Although transaction authentication by the webauthn standard is not yet commonly used, cryptocurrency hardware wallets almost universally utilize transaction authentication. The two most popular manufacturers, Ledger \cite{https://www.ledger.com/} and Trezor \cite{https://trezor.io/}, sell hardware wallets which hold the private keys and have displays. In order to send any cryptocurrency from the device, the device displays a message detailing the transaction which the user would need to authorize on the physical device. Otherwise, the device will not sign the transaction which is required for it to proceed and be sent over the network.
 
-\fi
+In a similar but diminished vain, some banks such as Bank of America reuse two-factor authentication for sensitive or high-value monetary transactions \cite{https://www.eff.org/deeplinks/2016/12/how-enable-two-factor-authentication-bank-america}. This is unlike transaction authentication in that the user does not see a confirmation of the exact transaction to take place before confirming. But the process of requesting supplemental two-factor authentication on sensitive transactions aims to defend against a similar threat model as transaction authentication.
+
+\subsection{Hardware Authenticators for \newline Transaction Authentication}
+
+First and foremost, few hardware devices support generic transaction authentication. Hardware authenticators for two-factor authentication such as the YubiKey discussed in Section~\ref{Sec:HardwareAuthenticators_2FA} do not have any display. Therefore, they are unable to perform the core function of transaction authentication, displaying a message to the user and signing it upon their confirmation. The cryptocurrency hardware wallets discussed in Section~\ref{Sec:CurrentUses_txAuthn} provide transaction authentication, but only for a limited subset of functionality relating to crypto transactions.  
+
+The webauthn standard is supported by a few authenticators, but none are dedicated hardware devices required by the threat model. Also, these authenticators only support regular webauthn two-factor authentication, not the transaction authentication extension. Google has a Chrome extension that poses as a virtual hardware authenticator; it performs all of the signing in-browser \cite{https://github.com/google/virtual-authenticators-tab}. Krypton is a small company dedicated to making cryptographic authentication easy \cite{https://krypt.co/}. They provide a browser plugin and phone app which pair. The plugin interfaces with the frontend and the phone performs the cryptographic signing. 
+
+This research modified the Krypton browser plugin to display the authentication message and await user consent before performing the signing also in-browser.
+
+%% 
+%% \iffalse
+%% For ease of development, this research modified the Krypton browser plugin to display the authentication message and await user consent before performing the signing in-browser. It completely
+%% \fi
+%% 
+
+\subsection{Web Application Firewalls}
+
+A Web Application Firewall is a firewall that filters web traffic going to a web-service \cite{https://cybersecurity.att.com/blogs/security-essentials/explain-how-a-web-application-firewall-works}. Most web application firewalls try to block malicious internet traffic from ever reaching the web-server. Common attacks depended against by web application firewalls include SQL injection, cross-site scripting and DDoS attacks. Typically, the firewall inspects incoming GET and POST request HTTP/HTTPS traffic and applies pre-configured rules to identify and filter out the undesired traffic.
+
+
+%% 
+%% \iffalse
+
+%% This research builds on top of the description of transaction authentication as outlined by the first version of the webauthn specification \cite{webauthn}. The webauthn specification is a comprehensive document, standardizing a protocol for two-factor authentication with configurable extensions. The protocol covers in detail how traditional two-factor authentication should be performed under webauthn as well as details how to extend it to perform transaction authentication. Transaction authentication is similar to a regular two-factor authentication event, just with some additional user involvement; the user must confirm a given transaction on a dedicated hardware device for the authentication to proceed. 
+
+%% The purpose of transaction authentication in the eyes of the webauthn specification authors is to provide integrity to high risk operations on a website. In fact, further papers including \cite{EuroFIDO} detail use-cases of webauthn transaction authentication such as authorizing large value monetary transactions, consenting to data being shared with a third-party and authorizing a trusted service to sign a digital contract. All of these operations are very important and requesting individual authentication for each may be warranted. 
+
+%% It appears that the state of the art for known security benefits through transaction authentication ends there. There is no research detailing how webauthn transaction authentication should be integrated into a service, what are good design choices in doing so or what the engineer should keep in mind in order to avoid accidental security holes.
+
+%% \fi
+%% 
