@@ -97,7 +97,7 @@ An \lstinline{extensions} field is also returned, following the webauthn protoco
 %% \fi
 %% 
 
-\subsection{Cryptographic Attestation}
+\subsection{Cryptographic Attestation}\label{Sec:CryptographicAttestation}
 
 The request options from the firewall go through the frontend and are passed on to the hardware authenticator device. The threat model assumes that only the firewall, backend and hardware authenticator are secure. At any point, the frontend or web-browser could modify these options, but any tampering will be detected later on and denied authorization. The hardware device parses the request options, extracts from the \lstinline{extensions} field the authentication message and presents that to the user. The authentication message is in the form of a confirmation for some requested operation and is answered either by ``yes'' or ``no''. If the user attests ``yes'', the hardware device cryptographically signs a data object which is returned as an additional field within the HTTP request to the firewall for verification.
 
