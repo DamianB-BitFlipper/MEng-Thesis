@@ -46,6 +46,7 @@ func deleteSSHKey(w http.ResponseWriter, r *http.Request) {
 
 The domain specific language and helper functions simplify this code greatly. Simpler code makes development and maintenance of the webauthn firewall much easier. The following is the actual firewall code that secures the SSH key deletion for Gogs:
 
+\begin{minipage}{\linewidth}
 \begin{lstlisting}
 Secure("POST", "/user/settings/ssh/delete", Authn(
   "Delete SSH key named: %v",
@@ -53,6 +54,7 @@ Secure("POST", "/user/settings/ssh/delete", Authn(
   wf.GetVar("ssh_key").SubField("Name"),
 ))
 \end{lstlisting}
+\end{minipage}
 
 As demonstrated above, the traditional methods of directly integrating webauthn into a web-service are bulky and difficult to configure. The firewall is designed to be highly configurable and minimally intrusive. The less code an engineer has to modify in the web-service itself, the better.
 
@@ -64,9 +66,11 @@ As demonstrated above, the traditional methods of directly integrating webauthn 
 
 \subsection{Request Life Cycle}
 
-\begin{center}
-\includegraphics[width=12cm]{HTTP_request_flow}
-\end{center}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=12cm]{HTTP_request_flow}
+  %\caption{The evidence is overwhelming: don't smoke.}  \label{fig:xray}
+\end{figure}
 
 The life cycle of an HTTP request begins with the firewall capturing and parsing it when it is sent from the frontend to the backend. Then the firewall decides whether to verify those requests with transaction authentication or not. If not, the request is simply proxied through to the backend without any extra work. Otherwise, performs a verification procedure on the request and only upon success does the request pass through the firewall to the backend. Upon failure, the request is blocked.
 
@@ -365,7 +369,9 @@ Domain specific language operations that affect the format string are listed in 
 
 %% TODO: Make sure that the table references are correct
 
-\begin{center}
+\begin{table}[h]
+\centering
+
 \begin{tabular}{ m{2.5cm} m{11.5cm}  } 
  \hline
  Operation & Description \\ 
@@ -388,7 +394,7 @@ Domain specific language operations that affect the format string are listed in 
  \lstinline|Apply| & Applies a Go function to outputs of DSL operations. The result of the function feeds into the format string. \\ \hline
 
 \end{tabular}\label{Table:DSL_GetterOperations}
-\end{center}
+\end{table}
 
 %% \iffalse
 %%  using the \lstinline{Authn} function to specify the format of the authentication message the handler should check.
@@ -429,7 +435,9 @@ Domain specific language operations that affect the format string are listed in 
 
 Domain specific language operations that facilitate the DSL, but do not affect the format string are listed in Table~\ref{Table:DSL_SetterOperations}. The operations generally perform some side-effect, but are not directly used to construct the format string.
 
-\begin{center}
+\begin{table}[h]
+\centering
+
 \begin{tabular}{ m{2.5cm} m{11.5cm}  } 
  \hline
  Operation & Description \\ 
@@ -441,8 +449,9 @@ Domain specific language operations that facilitate the DSL, but do not affect t
 
  \lstinline|Log| & Logs values to the firewalls console. Useful for debugging. \\ \hline
 
-\end{tabular}\label{Table:DSL_SetterOperations}
-\end{center}
+\end{tabular}
+\label{Table:DSL_SetterOperations}
+\end{table}
 
 %% 
 %% \iffalse

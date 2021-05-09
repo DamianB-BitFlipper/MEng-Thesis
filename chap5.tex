@@ -126,7 +126,9 @@ The cryptographic verification of a webauthn transaction authentication event oc
 
 The webauthn firewall secures a number of core webauthn operations detailed in~\ref{Sec:DefaultHandlers}. Many of them can be grouped in Table~\ref{Table:Implementation_DefaultHandlers} by their similar implementations.
 
-\begin{center}
+\begin{table}[h]
+\centering
+
 \begin{tabular}{ m{3cm} m{11cm}  } 
  \hline
  Function & Description \\ 
@@ -140,8 +142,9 @@ The webauthn firewall secures a number of core webauthn operations detailed in~\
 
  \lstinline|disableWebauthn| & Validates webauthn public key credential and authentication message \lstinline|"Confirm disable webauthn for {{ username }}"|. If successful, deletes the credential from the firewall's database. \\ \hline
 
-\end{tabular}\label{Table:Implementation_DefaultHandlers}
-\end{center}
+\end{tabular}
+\label{Table:Implementation_DefaultHandlers}
+\end{table}
 
 %% 
 %% \iffalse
@@ -155,6 +158,9 @@ The webauthn firewall secures a number of core webauthn operations detailed in~\
 %% All of these library calls return session data to be saved locally at the firewall and webauthn options data to be returned in response to the request.
 
 %% \item \lstinline{finishRegister}, \lstinline{finishLogin} and \lstinline{disableWebauthn} all call a finishing function. The \lstinline{finishRegister} calls \lstinline{webauthnAPI.FinishRegistration} which validates the HTTP register request and credentials. If all passes, then the credentials are saved in the firewall for the current user. The \lstinline{finishLogin} and \lstinline{disableWebauthn} both perform the same verification described in Section~\ref{Sec:WebauthnVerification} by calling \lstinline{webauthnAPI.FinishLogin}. The \lstinline{finishLogin} does not check any transaction authentication message since it is for simple two-factor authentication. The \lstinline{disableWebauthn} checks the authentication message \lstinline|"Confirm disable webauthn for {{ username }}"|.
+
+%% \end{itemize}
+
 %% \fi
 %% 
 
@@ -163,8 +169,6 @@ The webauthn firewall secures a number of core webauthn operations detailed in~\
 %% first check if the user has webauthn enabled and then call \lstinline{webauthnAPI.BeginLogin}. Similarly as in Section~\ref{Sec:WebauthnVerification}, these Go library functions return session data to be saved locally at the firewall and a options data to be returned as a response to this request.
 %% \fi
 %% 
-
-\end{itemize}
 
 \section{Domain Specific Language}
 
