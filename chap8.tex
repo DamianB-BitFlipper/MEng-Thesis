@@ -5,7 +5,7 @@
 %% \files=
 %% prompt when you run the file main.tex through LaTeX.
 
-\chapter{Discussion and Future Work}
+\chapter{Discussion and Future Work}\label{Chap:DiscussionAndFutureWork}
 
 This chapter discusses a number of related notes on transaction authentication discovered over the course of this research. 
 
@@ -61,11 +61,11 @@ Transaction authentication defends against unauthorized and unwanted operations 
 
 \section{RPC Isolation}
 
-Transaction authentication is often understood as a mechanism to protect the user by defending against unauthorized operations. Intrusive integration of transaction authentication into a web-service has a collateral benefit of being able to shrink the trusted computing base on the server-side. The original threat model assumes that all server code is secure. However, if a web-service RPC isolates its various components internally, then only the component actually executing the given operation must be trusted. This is the case when said component is the one performing the webauthn verification. Even if any other component were compromised, the transaction authentication secured request cannot be modified since the trusted component would fail its verification.
+Transaction authentication is often understood as a mechanism to protect the user by defending against unauthorized operations. Intrusive integration of transaction authentication into a web service has a collateral benefit of being able to shrink the trusted computing base on the server-side. The original threat model assumes that all server code is secure. However, if a web service RPC isolates its various components internally, then only the component actually executing the given operation must be trusted. This is the case when said component is the one performing the webauthn verification. Even if any other component were compromised, the transaction authentication secured request cannot be modified since the trusted component would fail its verification.
 
 %% 
 %% \iffalse
-%% If transaction authentication is integrated into a web-service intrusively, not 
+%% If transaction authentication is integrated into a web service intrusively, not 
 
 %% However, it has the collateral benefit of being able to shrink the trusted computing base 
 %% \fi
@@ -80,7 +80,7 @@ If the disable webauthn event were not transaction authentication secured, a tri
 
 Less obvious direct subversion attacks are also possible. In Gogs, an adversary could create a new dummy user without webauthn enabled. Then they could add the dummy user as an owner of a target repository and perform the delete operation from the unsecured user. If not carefully protected, such as requiring transaction authentication also for adding new repository owners, this sequence of operations could subvert the protected route of repository deletion.
 
-Direct subversion opportunities can be detected by performing route search and analysis similar to symbolic execution. Such a system could scan the web-service's code and trace all possible chains of operations that could get around the transaction authentication protection of a specific route.
+Direct subversion opportunities can be detected by performing route search and analysis similar to symbolic execution. Such a system could scan the web service's code and trace all possible chains of operations that could get around the transaction authentication protection of a specific route.
 
 \subsection{Indirect Subversion}
 Indirect subversion opportunities are harder to detect since they involve a human element. These attacks trick the user into transaction authenticating a seemingly innocuous operation when actually they are authorizing something sensitive. 

@@ -14,7 +14,7 @@
 %%   - default input getters
 %%   - context retrieval 
 
-\chapter{Webauthn Firewall Implementation}
+\chapter{Webauthn Firewall Implementation}\label{Chap:WebauthnFirewallImplementation}
 
 The webauthn firewall studied in this thesis is implemented in the Go programming language. This chapter describes how some of the critical components of the firewall's design detailed in Chapter~\ref{Chap:WebauthnFirewallDesign} are actually implemented.
 
@@ -89,7 +89,7 @@ The cryptographic verification of a webauthn transaction authentication event oc
 
 %% The \lstinline{wuser} is a webauthn user entry from the firewall's database store. It contains typical information such as the user's ID and public key credential. Returned are the \lstinline{options} that get sent back to the frontend and eventually the hardware authenticator as the result of the setup stage. The \lstinline{sessionData} is remembered by the firewall for the current HTTP request as described in Section~\ref{Sec:TransactionAuthenticationSetup}.
 
-%% The \lstinline{FinishLogin} call is invoked more selectively. If a user does not have webauthn currently enabled, that is they do not have a registered hardware device with the web-service, then routes that are webauthn protected should not check for webauthn for that user's requests. The following is a simplification of the webauthn transaction verifying code.
+%% The \lstinline{FinishLogin} call is invoked more selectively. If a user does not have webauthn currently enabled, that is they do not have a registered hardware device with the web service, then routes that are webauthn protected should not check for webauthn for that user's requests. The following is a simplification of the webauthn transaction verifying code.
 
 %% \begin{lstlisting}
 %% // See if the user has webauthn enabled
@@ -190,7 +190,7 @@ Each DSL operation must implement an \lstinline{execute} and \lstinline{retrieve
 %% \fi
 %% 
 
-\begin{lstlisting}
+\begin{lstlisting}[float=h]
 execute(r *ExtendedRequest, 
         scope scopeContainer, 
         formatVars *[]interface{})
@@ -206,7 +206,7 @@ A call to \lstinline{execute} can use the request being authenticated and curren
 
 The \lstinline{retrieve} function of a DSL operation is used to extract a return value from the operation. In contrast to the \lstinline{execute} function, the \lstinline{retrieve} function is called by other operations directly. Whenever a DSL operation is passed as an argument to another operation, the parent operation may call the child's \lstinline{retrieve} in order to resolve the return value. It should have no effects on the format string and, therefore, does not receive the \lstinline{formatVars} array. The function type of \lstinline{retrieve} is as follows:
 
-\begin{lstlisting}
+\begin{lstlisting}[float=h]
 retrieve(r *ExtendedRequest, scope scopeContainer) interface{}
 \end{lstlisting}
 

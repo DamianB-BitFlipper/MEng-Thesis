@@ -5,7 +5,7 @@
 %% \files=
 %% prompt when you run the file main.tex through LaTeX.
 
-\chapter{Evaluations}
+\chapter{Evaluations}\label{Chap:Evaluations}
 
 This chapter presents evaluaiton metrics from the three case studies of the webauthn firewall. They put in concrete terms all of the advantages of the webauthn firewall discussed throughout this thesis. The principal evaluation critera focus on simplicity, organization, ease-of-use and performance overhead of the firewall.
 
@@ -72,17 +72,18 @@ The total file sizes and the respective four-way breakdown illustrate the overal
 \end{tabular}
 \end{table}
 
-The firewall configuration file is the sole source of customization that dictates how the firewall interacts with a specific web-service. Both Calypso and Gogs are production web-services. Considering that they are secured by the webauthn firewall within approximately 250 lines of code, this supports the claimed advantages of the firewall's simplicity and organization. 
+The firewall configuration file is the sole source of customization that dictates how the firewall interacts with a specific web service. Both Calypso and Gogs are production web services. Considering that they are secured by the webauthn firewall within approximately 250 lines of code, this supports the claimed advantages of the firewall's simplicity and organization. 
 
 \subsection{Incremental Complexity to Secure a Route}
 
-The configuration parameters, context retrieval and miscellaneous code are more or less fixed costs to the configuration file's complexity. Only the route handlers scales with the size of the service being secured. Conduit being the smallest and simplest web-service has the smallest route handler cost. Gogs, on the opposite end of the spectrum, naturally has the largest cost. Since most routes may be secured using the domain specific language, the increase in route handler complexity increases slowly.
+The configuration parameters, context retrieval and miscellaneous code are more or less fixed costs to the configuration file's complexity. Only the route handlers scales with the size of the service being secured. Conduit being the smallest and simplest web service has the smallest route handler cost. Gogs, on the opposite end of the spectrum, naturally has the largest cost. Since most routes may be secured using the domain specific language, the increase in route handler complexity increases slowly.
 
 The following bar chart plots the frequencies of lines of code needed to secure a new route among all three case studies. Two clear clusters emerge where the lower end of lines of code per route handler, those less than approximately 20 lines of code, correspond to uses of the domain specific language. The handlers greater than 20 lines of code are solely the custom handlers. It is natural to expect this divide since the custom handlers by nature perform more involved processing of a request than the DSL handlers and thus use more lines of code.
 
-\begin{center}
-\includegraphics[width=14cm]{LoC_routes_secured}
-\end{center}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=14cm]{LoC_routes_secured}
+\end{figure}
 
 This chart also evidently demonstrates that most of the routes may be secured using only the domain specific language. Of all 20 routes secured among all three case studies, only 5 required a custom handler. This means that 75\% of the routes could be captured by the domain specific language. The average domain specific program to secure a route is 4 lines of code, and the average custom handler is 32 lines of code.
 
@@ -96,20 +97,20 @@ The size of this configuration file and how much
 
 A source of complexity when using the webauthn firewall is its configuraiton. These evaluation metrics demonstate that the firewall is 
 
-In order to use the webauthn firewall on a web-service, it must be configured. 
+In order to use the webauthn firewall on a web service, it must be configured. 
 
 The total size, number of changes and 
 
 Simplicity and organization
 
  are the main evaluation critera.
-the benefits of using the firewall to integrate webauthn into a web-service. 
+the benefits of using the firewall to integrate webauthn into a web service. 
 \fi
 %% 
 
 \section{Frontend Modifications}
 
-The frontend of a web-service must be modified slightly when integrating webauthn, regardless of whether the webauthn firewall is in use or not. The frontend issuing the webauthn operation must adhere to the protocol specification life cycle as described in Chapter~\ref{Chap:WebauthnTransactionAuthentication}. The total number of code changes to the frontend exceed that of the webauthn configuration file as follows:
+The frontend of a web service must be modified slightly when integrating webauthn, regardless of whether the webauthn firewall is in use or not. The frontend issuing the webauthn operation must adhere to the protocol specification life cycle as described in Chapter~\ref{Chap:WebauthnTransactionAuthentication}. The total number of code changes to the frontend exceed that of the webauthn configuration file as follows:
 
 \begin{table}[h]
 \centering
@@ -140,9 +141,9 @@ The boilerplate code is offloaded to a JavaScript library, but the library calls
 \fi
 %% 
 
-\section{Backend Modifications}
+\section{Backend Modifications}\label{Sec:BackendModifications}
 
-A significant advantage to using the webauthn firewall over integrating webauthn intrusively into a web-service is the lack of modifications needed to the backend. Using the webauthn firewall is minimally invasive as demonstrated by the following table:
+A significant advantage to using the webauthn firewall over integrating webauthn intrusively into a web service is the lack of modifications needed to the backend. Using the webauthn firewall is minimally invasive as demonstrated by the following table:
 
 \begin{table}[h]
 \centering
@@ -201,15 +202,16 @@ The experiment's data are collected as follows. The hardware is a quad-core Inte
 %% TODO: Make sure colors match up
 Three different scenarios are tested. The blue line measures the request latencies for using the firewall on users that have webauthn enabled. The orange line measures the request latencies for the firewall on users without webauthn enabled. The difference between these two lines is the overhead of validating a webauthn transaction versus simply letting the request pass through. The yellow line measures the latencies of sending these requests to the backend directly.
 
-\begin{center}
-\includegraphics[width=14cm]{performance_latencies}
-\end{center}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=14cm]{performance_latencies}
+\end{figure}
 
 For the most part, the blue and orange line remain tightly together signifying that there is little overhead from the actual validation of a webauthn transaction. Rather there is a significant gap between the direct connection and the firewall setup. This discrepancy arises from the implementation of the \lstinline{GetUserID} function of the Gogs firewall. The \lstinline{GetUserID} is a configurable function described in Section~\ref{Sec:ConfigurationParameters} which identifies the current user of a request received by the firewall. 
 
 The firewall uses the current user information to determine for every incoming HTTP request whether that user has webauthn enabled and to verify the transaction accordingly if so. In Gogs, the user of a request is identified by a session ID which only the backend can translate to a user ID. Therefore the \lstinline{GetUserID} for the Gogs firewall involves a HTTP GET request to the backend to retrieve the user ID. Therefore, every request that passes through the firewall invokes an additional HTTP request accounting for the substantial overhead when using the firewall. Under the 30 user load, the additional overhead of this \lstinline{GetUserID} operation added approximately 70 milliseconds to the overall latency.
 
-The \lstinline{GetUserID} function is specific to the web-service, and it is possible to design the software to avoid the additional HTTP call. The Conduit web-service, for example, uses JSON Web Tokens (JWT) in order to identify the current user of an HTTP request. In this setup, the user ID is simply included in a signed JSON object with the request. The firewall can simply parse this data object and extract the identifier directly without any additional HTTP requests. Under such a setup, the latency discrepancy between the firewall and direct scenarios should diminish significantly.
+The \lstinline{GetUserID} function is specific to the web service, and it is possible to design the software to avoid the additional HTTP call. The Conduit web service, for example, uses JSON Web Tokens (JWT) in order to identify the current user of an HTTP request. In this setup, the user ID is simply included in a signed JSON object with the request. The firewall can simply parse this data object and extract the identifier directly without any additional HTTP requests. Under such a setup, the latency discrepancy between the firewall and direct scenarios should diminish significantly.
 
 %% 
 \iffalse
