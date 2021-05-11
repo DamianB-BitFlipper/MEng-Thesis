@@ -7,7 +7,7 @@
 
 \chapter{Evaluations}\label{Chap:Evaluations}
 
-This chapter presents evaluaiton metrics from the three case studies of the webauthn firewall. They put in concrete terms all of the advantages of the webauthn firewall discussed throughout this thesis. The principal evaluation critera focus on simplicity, organization, ease-of-use and performance overhead of the firewall.
+This chapter presents evaluation metrics from the three case studies of the webauthn firewall. They put in concrete terms all of the advantages of the webauthn firewall discussed throughout this thesis. The principal evaluation critera focus on simplicity, organization, ease-of-use and performance overhead of the firewall.
 
 \section{Webauthn Firewall Configuration Metrics}
 
@@ -23,7 +23,7 @@ The total configuration file size evaluates the overall complexity of configurin
 
 \item Context retrieval functions as discussed in Section~\ref{Sec:ContextRetrieval}
 
-\item DSL and custom route handlers as discussed in Sections~\ref{Sec:DomainSpecificLanguage} and~\ref{Sec:CustomHandlers}
+\item Domain specific language and custom route handlers as discussed in Sections~\ref{Sec:DomainSpecificLanguage} and~\ref{Sec:CustomHandlers}
 
 \item Miscellaneous code such as extraneous syntax and boilerplate code
 
@@ -88,24 +88,24 @@ The following bar chart plots the frequencies of lines of code needed to secure 
 This chart also evidently demonstrates that most of the routes may be secured using only the domain specific language. Of all 20 routes secured among all three case studies, only 5 required a custom handler. This means that 75\% of the routes could be captured by the domain specific language. The average domain specific program to secure a route is 4 lines of code, and the average custom handler is 32 lines of code.
 
 %% 
-\iffalse
- the domain specific language excises all of the boilerplate code wheras not handled directly in the custom handlers
+%% \iffalse
+%%  the domain specific language excises all of the boilerplate code wheras not handled directly in the custom handlers
 
-, and they are secured using
+%% , and they are secured using
 
-The size of this configuration file and how much
+%% The size of this configuration file and how much
 
-A source of complexity when using the webauthn firewall is its configuraiton. These evaluation metrics demonstate that the firewall is 
+%% A source of complexity when using the webauthn firewall is its configuraiton. These evaluation metrics demonstate that the firewall is 
 
-In order to use the webauthn firewall on a web service, it must be configured. 
+%% In order to use the webauthn firewall on a web service, it must be configured. 
 
-The total size, number of changes and 
+%% The total size, number of changes and 
 
-Simplicity and organization
+%% Simplicity and organization
 
- are the main evaluation critera.
-the benefits of using the firewall to integrate webauthn into a web service. 
-\fi
+%%  are the main evaluation critera.
+%% the benefits of using the firewall to integrate webauthn into a web service. 
+%% \fi
 %% 
 
 \section{Frontend Modifications}
@@ -133,12 +133,12 @@ The frontend of a web service must be modified slightly when integrating webauth
 These code changes are not complex, but rather simple and pedestrian. There is boilerplate code offloaded to a JavaScript library. The nature of protecting an operation with webauthn on the frontend involves making a few library calls, error handling and piecing together the authentication message from the HTML data present. For example, each Gogs operation secured by webauthn involves on average 54 lines of code changes to the frontend. 
 
 %% 
-\iffalse
-This includes the code to correctly format and encode data fields.
+%% \iffalse
+%% This includes the code to correctly format and encode data fields.
 
-The boilerplate code is offloaded to a JavaScript library, but the library calls as well as piecing together the authentication message make up those changes.
+%% The boilerplate code is offloaded to a JavaScript library, but the library calls as well as piecing together the authentication message make up those changes.
 
-\fi
+%% \fi
 %% 
 
 \section{Backend Modifications}\label{Sec:BackendModifications}
@@ -187,11 +187,13 @@ Many of the additional lines of code for the intrusive webauthn integration of G
 
 The firewall also dramatically reduces the amount of boilerplate code required to secure a new route. Gogs secured intrusively takes on average 87 lines of code per new route. The firewall has on average 11 lines per new route.
 
-\iffalse
-minimally invasive
+%% 
+%% \iffalse
+%% minimally invasive
 
-Not all of the routes covered by the webauthn firewall case study of Gogs were done intrusively, but only the handful secured are enough to outline the minimal.
-\fi
+%% Not all of the routes covered by the webauthn firewall case study of Gogs were done intrusively, but only the handful secured are enough to outline the minimal.
+%% \fi
+%% 
 
 \section{Performance Overhead}
 
@@ -214,13 +216,13 @@ The firewall uses the current user information to determine for every incoming H
 The \lstinline{GetUserID} function is specific to the web service, and it is possible to design the software to avoid the additional HTTP call. The Conduit web service, for example, uses JSON Web Tokens (JWT) in order to identify the current user of an HTTP request. In this setup, the user ID is simply included in a signed JSON object with the request. The firewall can simply parse this data object and extract the identifier directly without any additional HTTP requests. Under such a setup, the latency discrepancy between the firewall and direct scenarios should diminish significantly.
 
 %% 
-\iffalse
-There are three measurements
+%% \iffalse
+%% There are three measurements
 
-There naturally is a performance overhead suffered because of the .
+%% There naturally is a performance overhead suffered because of the .
 
-  it naturally does add performance overhead.
+%%   it naturally does add performance overhead.
 
-Despite all of the advantages laid out by the webauthn firewall,
-\fi
+%% Despite all of the advantages laid out by the webauthn firewall,
+%% \fi
 %% 

@@ -7,11 +7,11 @@
 
 \chapter{Discussion and Future Work}\label{Chap:DiscussionAndFutureWork}
 
-This chapter discusses a number of related notes on transaction authentication discovered over the course of this research. 
+This chapter makes a number of observations on transaction authentication discovered over the course of this research. 
 
 \section{Applications of Transaction Authentication}
 
-Transaction authentication is not without its limitations. There are use cases that make perfect sense for this authentication extension which fit nicely within its specification and capabilities. Other cases may not lend themselves well to transaction authentication, if at all. The complexity of the authentication message displayed is the chief determining factor for what makes a good versus poor use case.
+Transaction authentication is not without its limitations. There are use cases that make perfect sense for this authentication extension, which fit nicely within its specification and capabilities. Other cases may not lend themselves well to transaction authentication. The complexity of the authentication message displayed is a key determining factor for what makes a good versus poor use case.
 
 %% 
 %% \iffalse
@@ -27,7 +27,7 @@ Good use cases of transaction authentication are those where the authentication 
 
 An example from Gogs is the delete repository action. It is secured with the authentication message: \lstinline|"Confirm repository delete: {username}/{reponame}|. From this message, it should be immediately evident to a user what the operation to be performed is. 
 
-A short authentication message is less likely to be misinterpreted by the user. Additionally, a hardware authenticator device is likely to have a relatively small display. So shorter authentication messages are better poised for this restrictive display medium. 
+A short authentication message is less likely to be misinterpreted by the user. Additionally, a hardware authenticator device is likely to have a relatively small display. So shorter authentication messages are better fit for this restrictive display medium. 
 
 %% 
 %% \iffalse
@@ -37,15 +37,21 @@ A short authentication message is less likely to be misinterpreted by the user. 
 
 \subsection{Poor Use Cases}
 
-A poor use case is one where it is possible to secure under transaction authentication, but it is rather clunky and disruptive to the user experience. Three general classes of such problems have been identified:
+A poor use case is one where it is possible to use transaction authentication, but it is rather clunky and disruptive to the user experience. Three general classes of such problems are as follows:
 
 \begin{itemize}[nosep]
 
-\item There is a lot of context to authenticate. One example is a big form that needs transaction authentication. This form is unlikely to all fit on the hardware authenticator's display. Also, even when only one aspect of the form is modified, all of the entries must be displayed to the user since they all are sent over int he HTTP request.
+\item There is a lot of context to authenticate. One example is a big form that needs transaction authentication. This form is unlikely to all fit on the hardware authenticator's display. Also, even when only one aspect of the form is modified, all of the entries must be displayed to the user since they all are sent over in the HTTP request.
 
-\item The contents being displayed are not friendly for human readability. Examples include SSH keys, cryptographic hashes, and Git hooks code blocks. These can be displayed, but are burdensome for the user to verify their exact correctness.
+\item The contents being displayed are not friendly for human readability. Examples include SSH keys, cryptographic hashes, and Git hooks code blocks. These can be displayed, but are burdensome for the user to verify.
 
-\item The context media is difficult or impossible to meaningfully be displayed. Rich media such as images or audio clips fully depend on the hardware authenticator's physical capabilities. Binary uploads have no good way of being displayed to the user at all.
+\item The context media is difficult or impossible to meaningfully be displayed. Rich media such as images or audio clips fully depend on the hardware authenticator's physical capabilities. Binary uploads have no good way of being displayed to the user at all. For example, the Gogs route to publish a new release as discussed in Section~\ref{Sec:Gogs_CustomHandlers} has no way to validate the binary contents being uploaded.
+
+%% 
+%% \iffalse
+%% An example route in this category would be the Gogs new release upload form.
+%% \fi
+%% 
 
 \end{itemize}
 
@@ -73,19 +79,39 @@ Transaction authentication is often understood as a mechanism to protect the use
 
 \section{Tracing Transaction Authentication \newline Subversion Opportunities}
 
-Securing a route with transaction authentication is unexpectedly nuanced with the possibility to directly or indirectly subvert the protection. Direct subversion actively evades the transaction authentication protection. Indirect subversion tricks the user into transaction authenticating some operation that actually is undesired.
+%% 
+%% \iffalse
+%% is unexpectedly nuanced with the possibility to
+%% \fi
+%% 
+
+Securing a route with transaction authentication requires careful planning to avoid any vulnerabilities of directly or indirectly subverting the protection. Direct subversion actively evades the transaction authentication protection. Indirect subversion tricks the user into transaction authenticating some operation that actually is undesired.
 
 \subsection{Direct Subversion}
-If the disable webauthn event were not transaction authentication secured, a trivial example of direct subversion is possible. The adversary could disable webauthn before performing any sensitive operation. However, disable webauthn is one of the core operations supported automatically by the firewall as discussed in Section~\ref{Sec:ConfigurationParameters}, so this hypothetical scenario cannot happen.
+If the disable webauthn event were not transaction authentication secured, a trivial example of direct subversion is possible. The adversary could disable webauthn before performing any sensitive operation. To avoid this, the disable webauthn operation is one of the default operations protected by the firewall as discussed in Section~\ref{Sec:ConfigurationParameters}.
+
+%% 
+%% \iffalse
+%% , so this hypothetical scenario cannot happen.
+%% \fi
+%% 
 
 Less obvious direct subversion attacks are also possible. In Gogs, an adversary could create a new dummy user without webauthn enabled. Then they could add the dummy user as an owner of a target repository and perform the delete operation from the unsecured user. If not carefully protected, such as requiring transaction authentication also for adding new repository owners, this sequence of operations could subvert the protected route of repository deletion.
 
-Direct subversion opportunities can be detected by performing route search and analysis similar to symbolic execution. Such a system could scan the web service's code and trace all possible chains of operations that could get around the transaction authentication protection of a specific route.
+Direct subversion opportunities might be detectable by performing route search and analysis similar to symbolic execution. Such a system could scan the web service's code and trace all possible chains of operations that could get around the transaction authentication protection of a specific route.
 
 \subsection{Indirect Subversion}
 Indirect subversion opportunities are harder to detect since they involve a human element. These attacks trick the user into transaction authenticating a seemingly innocuous operation when actually they are authorizing something sensitive. 
 
-An example within Gogs is the following scenario. A user has two repositories $A$ and $B$. The repository $A$ is important whereas $B$ is garbage. While the user is in the process of deleting a repository $B$, the adversary quickly and quietly renames $A$ to $B$ and $B$ to $A$. So by the time the user authorizes the deletion of $B$, repository $B$ is actually the important one. In doing so, the adversary hijacked the user's faithful deletion of the original garbage repository $B$ in order to delete the important repository $A$. 
+An example within Gogs is the following scenario. A user has two repositories $A$ and $B$. The repository $A$ is important whereas $B$ is garbage. In this scenario, repositories may be deleted or renamed. Deletion is webauthn protected whereas renaming is not.
+
+When the user decides to delete the garbage repository $B$, the adversary quickly and quietly renames $A$ to $B$ and $B$ to $A$. So by the time the user authorizes the deletion of $B$, repository $B$ is actually the important one. In doing so, the adversary hijacked the user's faithful deletion of the original garbage repository $B$ in order to delete the important repository $A$. 
+
+%% 
+\iffalse
+While the user is in the process of deleting a repository $B$, 
+\fi
+%% 
 
 The user believes that they are doing one operation, but in reality, they are doing a completely different and destructive other operation. Indirect subversion opportunities are difficult to notice and detect since, unlike the direct subversion opportunities, there need not be any causal links between operations. In the aforementioned example, there is no codified link between renaming a repository and its deletion. This attack purely relies on silently duping the user.
 
