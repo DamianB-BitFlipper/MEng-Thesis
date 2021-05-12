@@ -100,8 +100,13 @@ For example, a bank website could require that monetary transfers exceeding \$50
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=12cm]{authenticator}
+  \includegraphics[width=10cm]{authenticator_drawio}
   \caption{User interface of hardware authenticator.}
+
+  %% \centering
+  %% \defsvgwidth{\columnwidth}
+  %% \input{./images/authenticator_drawio.pdf_tex}
+  %% \caption{User interface of hardware authenticator.}
 \end{figure}
 
 This message contains enough information such that the user is fully informed of the operation they are about to perform. They can then make the educated judgment for whether to confirm the operation or not. In the adversarial event that Alice were in fact malicious and the monetary transfer is actually intended for Bob, the user should notice this discrepancy in the authentication message and decline the operation on the hardware authenticator. 
@@ -185,7 +190,7 @@ Firstly, it must be emphasized that webauthn is simply a protocol specification.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=12cm]{firewall}
+  \includegraphics[width=12cm]{firewall_drawio}
   \caption{Basic depiction of webauthn firewall functionality.}
 \end{figure}
 
@@ -228,13 +233,21 @@ The webauthn firewall presented in this thesis goes beyond simply providing a de
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\textwidth]{restful_vs_severside}
-  \caption{Comparison of RESTful versus server-side rendering web application architectures.}
+  \includegraphics[width=14cm]{RESTful_drawio}
+  \caption{The architecture design of a RESTful web application.}
+  \label{Fig:CaseStudiesRESTful}
 \end{figure}
 
-Three separate case studies demonstrate how the webauthn firewall secures different architectures of web applications with webauthn transaction authentication. The web applications studied cover the RESTful design paradigm and the more traditional server-side rendering paradigm. The two RESTful applications studied are Conduit \cite{TODO-conduit}, a simple blog website, and Calypso \cite{TODO-calypso}, a frontend admin panel for WordPress. The RESTful paradigm is where the webpage frontend and web-server backend are two separate programs. The frontend performs the rendering visible to the user, and whenever it needs to fetch information or has to perform some server operation, it communicates via a pre-established API to the web-server which executes those requests. 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=8cm]{ServerSide_drawio}
+  \caption{The architecture design of a server-side rendering web application.}
+  \label{Fig:CaseStudiesServerSide}
+\end{figure}
 
-The server-side rendering application studied is Gogs \cite{TODO-gogs}, a self-hosted Git service much like GitHub \cite{TODO-github?}. The server-side rendering paradigm is where every operation the user performs on the webpage gets sent over to the server as a form POST request. In return, the server responds with a whole new webpage, complete with all of the HTML and JavaScript code to be displayed directly on the user's web-browser.
+Three separate case studies demonstrate how the webauthn firewall secures different architectures of web applications with webauthn transaction authentication. The web applications studied cover the RESTful design paradigm and the more traditional server-side rendering paradigm. The two RESTful applications studied are Conduit \cite{TODO-conduit}, a simple blog website, and Calypso \cite{TODO-calypso}, a frontend admin panel for WordPress. As illustrated in Figure~\ref{Fig:CaseStudiesRESTful}, the RESTful paradigm is where the webpage frontend and web-server backend are two separate programs. The frontend performs the rendering visible to the user, and whenever it needs to fetch information or has to perform some server operation, it communicates via a pre-established API to the web-server which executes those requests. 
+
+The server-side rendering application studied is Gogs \cite{TODO-gogs}, a self-hosted Git service much like GitHub \cite{TODO-github?}. Figure~\ref{Fig:CaseStudiesServerSide} depicts the server-side rendering paradigm, where every operation the user performs on the webpage gets sent over to the server as a form POST request. In return, the server responds with a whole new webpage, complete with all of the HTML and JavaScript code to be displayed directly on the user's web-browser.
 
 %% 
 %% \iffalse

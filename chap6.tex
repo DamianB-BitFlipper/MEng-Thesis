@@ -14,9 +14,9 @@ This chapter presents three case studies used to evaluate the webauthn firewall.
 Conduit is a simple RESTful blog web service \cite{TODO-conduit}. It is not a production service, rather an educational service to demonstrate the flexibility of RESTful web-applications. The project supplies many simple frontend and backend implementations, written in various programming languages and frameworks, but following the same API. The case study focused on a React based frontend \cite{TODO-Conduit-React-Frontend} and a Golang based backend \cite{TODO-Conduit-Go-Backend}. Conduit is the best-case application for the webauthn firewall, a RESTful web service with basic functionality to protect. No backend modifications are necessary to integrate webauthn.
 
 %% 
-\iffalse
-This way, they can be interchanged without problem. 
-\fi
+%% \iffalse
+%% This way, they can be interchanged without problem. 
+%% \fi
 %% 
 
 %% \subsubsection{User Identification}
@@ -44,8 +44,9 @@ Calypso is a RESTful frontend for a WordPress admin panel \cite{TODO-calypso}. T
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=12cm]{multitarget_calypso}
-  \caption{The firewall must support two backend targets for Calypso.}\label{Fig:MultiTargetCalypso}
+  \includegraphics[width=14cm]{multitarget_calypso_drawio}
+  \caption{The webauthn firewall must support two backend targets for Calypso.}
+  \label{Fig:MultiTargetCalypso}
 \end{figure}
 
 Unlike the other two case studies, a point of complexity that Calypso has is that the frontend accesses multiple backends. Typically, the frontend requests to a single backend source. However, as shown in Figure~\ref{Fig:MultiTargetCalypso}, the Calypso frontend interfaces with two backend targets. WordPress has a backend for API requests, \lstinline{"public-api.wordpress.com"}, that accepts JSON payloads. Most of Calypso interacts with this backend. However, login requests go to the regular \lstinline{"wordpress.com"} backend which uses form-data payloads. This architecture design requirres the firewall to support multi-target proxying. Requests sent to the firewall contain their destined targets in their headers, and the firewall proxies accordingly. The firewall configuration for Calypso lists both of those target domains along with \lstinline{GetJSONInput} and \lstinline{GetFormInput} as their default input handlers respectively. 

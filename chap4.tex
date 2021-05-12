@@ -16,8 +16,9 @@ The webauthn firewall acts as a Web Application Firewall. It is situated directl
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=12cm]{HTTP_request_flow}
-  %\caption{The evidence is overwhelming: don't smoke.}  \label{fig:xray}
+  \includegraphics[width=12cm]{HTTP_request_flow_drawio}
+  \caption{The decision process for authorizing an HTTP request or not.}  
+  \label{fig:xray}
 \end{figure}
 
 The life cycle of an HTTP request begins with the firewall capturing and parsing it when it is sent from the frontend to the backend. Then the firewall decides whether to verify those requests with transaction authentication or not. If not, the request is simply proxied through to the backend without any extra work. Otherwise, it performs a verification procedure on the request and only upon success does the request pass through the firewall to the backend. Upon failure, the request is blocked.
@@ -95,7 +96,7 @@ As demonstrated above, the traditional method of directly integrating webauthn i
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=12cm]{firewall_configuration}
+  \includegraphics[width=14cm]{firewall_configuration_drawio}
   \caption{The functionality of the webauthn firewall fully depends on the configurable components passed into it.}\label{Fig:ConfigurableComponents}
 \end{figure}
 
@@ -134,7 +135,7 @@ In three different case studies, the firewall is used to integrate webauthn tran
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=12cm]{restful_with_firewall}
+  \includegraphics[width=\textwidth]{RESTful_with_firewall_drawio}
   \caption{The positioning and role of the webauthn firewall in a RESTful paradigm web service.}\label{Fig:ProxyingRequestsRESTful}
 \end{figure}
 
@@ -144,7 +145,7 @@ However, since the webauthn firewall sits in between the two, it runs on its own
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=12cm]{serverside_with_firewall}
+  \includegraphics[width=11cm]{ServerSide_with_firewall_drawio}
   \caption{The positioning and role of the webauthn firewall in a server-side rendering paradigm web service.}\label{Fig:ProxyingRequestsServerSide}
 \end{figure}
 
@@ -205,8 +206,9 @@ The fields within the configuration are grouped by function. The webauthn librar
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=12cm]{multitarget_restful}
-  \caption{A webauthn firewall handles multiple backend targets for a single frontend.}\label{Fig:MultiTargetRESTful}
+  \includegraphics[width=14cm]{multitarget_RESTful_drawio}
+  \caption{A webauthn firewall handles multiple backend targets for a single frontend.}
+  \label{Fig:MultiTargetRESTful}
 \end{figure}
 
 The second group, \lstinline{FrontendAddress}, \lstinline{ReverseProxyTargetMap} and \lstinline{ReverseProxyAddress}, contains the proxying address information. They hold the address of the frontend, the target backends and the firewall itself, respectively. As illustrated in Figure~\ref{Fig:MultiTargetRESTful}, it is possible that a web service's frontend accesses multiple backends. In this case, the firewall must know which backend to forward incoming requests to after processing them. This is stored as a hash map of hosts and target backends in \lstinline{ReverseProxyTargetMap}. This field simply configures the firewall to catch requests of a given \lstinline{host} address and forward them to a specific \lstinline{target}.
