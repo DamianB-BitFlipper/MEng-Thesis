@@ -67,13 +67,18 @@ Transaction authentication defends against unauthorized and unwanted operations 
 
 \section{RPC Isolation}
 
-Transaction authentication is often understood as a mechanism to protect the user by defending against unauthorized operations. Intrusive integration of transaction authentication into a web service has a collateral benefit of being able to shrink the trusted computing base on the server-side. The original threat model assumes that all server code is secure. However, if a web service RPC isolates its various components internally, then only the component actually executing the given operation must be trusted. This is the case when said component is the one performing the webauthn verification. Even if any other component were compromised, the transaction authentication secured request cannot be modified since the trusted component would fail its verification.
+Transaction authentication is often understood as a mechanism to protect the user by defending against unauthorized operations. Intrusive integration of transaction authentication into a web service has a collateral benefit of being able to shrink the trusted computing base on the server-side. The original threat model assumes that all server code is secure. However, if a web service RPC isolates its various components internally, then only the component actually executing the given operation must be trusted. 
+
+For example, the Gogs web sever has code and database tables pertaining to repository actions. They are independent of any other server operations and can be RPC isolated into a separate operating system process. This process is the only one with the privileges to execute repository actions, from renaming to deleting a repository. Consequently, the web server must interface with this process in order to operate on any repository. If this RPC isolated process also contains webauthn verification code, it can perform the transaction authentication validation on its own. Even if any other aspect of the web server were compromised, the webauthn protected repository requests sent to this process cannot be tampered with since they would fail the verification.
 
 %% 
 %% \iffalse
 %% If transaction authentication is integrated into a web service intrusively, not 
 
 %% However, it has the collateral benefit of being able to shrink the trusted computing base 
+
+%% This is the case when said component is the one performing the webauthn verification.
+%%  transaction authentication secured repository requests cannot be modified since the trusted component would fail its verification.
 %% \fi
 %% 
 

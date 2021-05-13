@@ -28,7 +28,35 @@ A major benefit of a RESTful web-application is that the backend exposes many us
 
 \subsection{Secured Routes}
 
-The simplicity of the Conduit application does not challenge the domain specific language much. The domain specific programs simply retrieve some context to complete the format strings. However, the user settings route requires a custom handler since transaction authentication. Nonetheless, it is not exceptionally complicated either. Requests are checked and transaction authenticated if the username, email or password are modified. Otherwise, HTTP requests that only modify non-sensitive fields like the bio or profile pictures pass through without any verification.
+The Conduit case study has three protected routes. Table~\ref{Table:ConduitSecuredRoutes} lists the secured operations with a sample authentication message for each. It presents an overview of how Conduit is protected with transaction authentication.
+
+\begin{table}[h]
+\centering
+
+\begin{tabular}{ m{5cm} m{9cm}  } 
+ \hline
+ Operation & Authentication Message \\ 
+ \hline \hline
+
+ Delete Comment & \lstinline{"Confirm comment delete: I love webauthn"} \\ \hline
+
+ Delete Article & \lstinline{"Confirm article delete: Cat Memes"} \\ \hline
+
+ Update User Settings & 
+%% TODO: Figure out how to remove numbering and frame
+ \begin{lstlisting} 
+"Confirm new user details:
+   username damian
+   email damianb@mit.edu"
+\end{lstlisting} 
+\\ \hline
+
+\end{tabular}
+\caption{The operations of Conduit secured by transaction authentication.}
+\label{Table:ConduitSecuredRoutes}
+\end{table}
+
+The simplicity of the Conduit application does not challenge the domain specific language much. The domain specific programs simply retrieve some context to complete the format strings. The ``Update User Settings'' route requires a custom handler, which is not exceptionally complicated. The custom handler transaction authenticates requests only if the username, email or password are modified. Otherwise, HTTP requests that only modify non-sensitive fields like the bio or profile pictures pass through without any verification.
 
 %% 
 %% \iffalse
@@ -73,7 +101,42 @@ The handler listens on the \lstinline{"wordpress.com/wp-login.php"} route. It ex
 
 \subsection{Secured Routes}\label{Sec:CalypsoSecuredRoutes}
 
-The domain specific language supports Calypso well. Certain domain specific programs have multiple context retrievals. Others have multiple format tags to fill, and one program requires a special formatting function. Apart from the custom login handler, all of the routes in Calypso are protected using the DSL. There is no case where a custom handler is necessary. One route receives HTTP request containing an array of elements that need to be comma separated in the authentication message. Rather than implementing a custom handler for this minor inconvenience, the \lstinline{Apply} domain specific operation described in Table~\ref{Table:DSL_GetterOperations} resolves this problem. It enables Go code to be used within a domain specific program to a limited extent. The following is a domain specific program for inviting new users to administer a WordPress blog.
+Table~\ref{Table:CalypsoSecuredRoutes} lists the secured operations of Calypso with a sample authentication message for each. The domain specific language supports Calypso well; every operation listed is secured using the domain specific language. This array of protected operations demonstrates the flexibility of the domain specific language.
+
+\begin{table}[h]
+\centering
+
+\begin{tabular}{ m{5cm} m{9cm}  } 
+ \hline
+ Operation & Authentication Message \\ 
+ \hline \hline
+
+ Update Profile Settings & \lstinline{"Save the profile settings: Espanol Public"} \\ \hline
+
+ Invite New Users to Site & \lstinline{"Invite new user(s): damian, durian, dominic"} \\ \hline
+
+ Change Site Address & 
+%% TODO: Figure out how to remove numbering and frame
+ \begin{lstlisting} 
+"Change site address
+   from: calypso.localhost
+   to: mytravels.blog.com"
+\end{lstlisting} 
+\\ \hline
+
+ Change Site Theme & \lstinline{"Change theme to: Tangerine Orange"} \\ \hline
+
+\end{tabular}
+\caption{The operations of Calypso secured by transaction authentication.}
+\label{Table:CalypsoSecuredRoutes}
+\end{table}
+
+Certain domain specific programs have multiple context retrievals. Others have multiple format tags to fill, and one program requires a special formatting function. Apart from the custom login handler, there is no case where a custom handler is necessary. 
+The ``Invite New Users to Site'' route receives HTTP request containing an array of elements that need to be comma separated in the authentication message. Rather than implementing a custom handler for this minor inconvenience, the \lstinline{Apply} domain specific operation described in Table~\ref{Table:DSL_GetterOperations} resolves this problem. It enables Go code to be used within a domain specific program to a limited extent. The following is a domain specific program for inviting new users to administer a WordPress blog.
+
+\iffalse
+all of the routes in Calypso are protected using the DSL. 
+\fi
 
 \begin{lstlisting}[float=h]
 firewall.Secure("POST", "/rest/{version}/sites/{site_id}/invites/new", 
@@ -119,11 +182,71 @@ A downside to server-side rendering web services when compared to RESTful servic
 %% \fi
 %% 
 
+\subsection{Secured Routes}
+
+While integrating webauthn into Gogs during the case study, every HTTP route of the web service is categorized whether it should be protected by transaction authentication or not. This judgment is made by weighing the cost versus the benefit of protecting that route. Protecting a route is not free, most heavily affecting the user experience. Routes are protected if the harm due to malicious hijacking justifies the burden to the user's experience.
+
+Table~\ref{Table:GogsSecuredRoutes} lists the secured operations with a sample authentication message for each. It presents an overview for the types of operations that could warrant webauthn transaction authentication.
+
+\begin{table}[h]
+\centering
+
+\begin{tabular}{ m{5cm} m{9cm}  } 
+ \hline
+ Operation & Authentication Message \\ 
+ \hline \hline
+
+ Delete Repository & \lstinline{"Confirm repository delete: damian/JS-OS"} \\ \hline
+
+ Add SSH Key & \lstinline{"Add SSH key named: Damian's Laptop"} \\ \hline
+
+ Delete SSH Key & \lstinline{"Delete SSH key named: Damian's Laptop"} \\ \hline
+
+ Update Profile Settings & 
+%% TODO: Figure out how to remove numbering and frame
+ \begin{lstlisting} 
+"Confirm profile details:
+   username damian
+   email damianb@mit.edu"
+\end{lstlisting} 
+\\ \hline
+
+ Set Primary Email & \lstinline{"Confirm new primary email: damianb@alum.mit.edu"} \\ \hline
+
+ Change Password & \lstinline{"Confirm password change"} \\ \hline
+
+ Leave Repository & \lstinline{"Leave repository named: JS-OS"} \\ \hline
+
+ Delete App Access Token & \lstinline{"Delete App named: Gogs-Watcher-App"} \\ \hline
+
+ Publish New Release &
+%% TODO: Figure out how to remove numbering and frame
+ \begin{lstlisting} 
+"Publish release named: Version 4.20
+   File names: release.tar.gz, release_x86"
+\end{lstlisting} 
+\\ \hline
+
+  Delete Web-Hook & \lstinline{"Delete webhook for: URL gogswatcher.app.com"} \\ \hline
+
+\end{tabular}
+\caption{The operations of Gogs secured by transaction authentication.}
+\label{Table:GogsSecuredRoutes}
+\end{table}
+
 \subsection{Custom Handlers}\label{Sec:Gogs_CustomHandlers}
 
-As with the other case-studies, most of the routes are simple and easy to secure using the domain specific language. At most, they require a context retrieval to fill a single format tag. Within the Gogs service, there are a number of routes that are shared by multiple HTTP operations. Similarly to the login route of Calypso discussed in Section~\ref{Sec:CalypsoLogin}, there is an \lstinline{"action"} field in the HTTP request payload that delineates the operation type. Only certain actions warrant being transaction authenticated. Custom handlers are used in these cases, to parse the \lstinline{"action"} field and webauthn secure only when necessary.
+As with the other case-studies, most of the routes are simple and easy to secure using the domain specific language. At most they require a context retrieval to fill a single format tag. Within the Gogs service, the ``Delete Repository'' and ``Set Primary Email'' operations in Table~\ref{Table:GogsSecuredRoutes} each share the same HTTP route for multiple different HTTP operations. Similarly to the login route of Calypso discussed in Section~\ref{Sec:CalypsoLogin}, requests have an \lstinline{"action"} field in their payload that delineates the operation type. Only certain actions warrant being transaction authenticated. Custom handlers are used in these cases, to parse the \lstinline{"action"} field and webauthn secure only when necessary.
 
-Gogs requires a more involved custom handler for protecting publishing a new release. The files associated with a new release are contained as UUIDs in the HTTP request. So each file needs context retrieval to retrieve the file name, which then must be comma separated in the format string. Rather than expressing this series of operations and formatting in an \lstinline{Apply} operation like with Calypso in Section~\ref{Sec:CalypsoSecuredRoutes}, it is easier to drop down to a custom handler function. The following code snippet is Go pseudo-code for the custom handler.
+ %% 
+%% \iffalse
+%% there are a number of routes such as the ``Delete Repository'' that are shared by multiple HTTP operations.
+
+%% publishing a new release. 
+%% \fi
+%% 
+
+Gogs requires a more involved custom handler for protecting the ``Publish New Release'' operation. The files associated with a new release are contained as UUIDs in the HTTP request. So each file needs context retrieval to retrieve the file name, which then must be comma separated in the format string. Rather than expressing this series of operations and formatting in an \lstinline{Apply} operation like with Calypso in Section~\ref{Sec:CalypsoSecuredRoutes}, it is easier to drop down to a custom handler function. The following code snippet is Go pseudo-code for the custom handler.
 
 \begin{lstlisting}[float=h]
 func publishNewRelease(w http.ResponseWriter, r *wf.ExtendedRequest) {
