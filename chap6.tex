@@ -38,9 +38,9 @@ The Conduit case study has three protected routes. Table~\ref{Table:ConduitSecur
  Operation & Authentication Message \\ 
  \hline \hline
 
- Delete Comment & \lstinline{"Confirm comment delete: I love webauthn"} \\ \hline
+ Delete Comment & \lstinline|"Confirm comment delete: I love webauthn"| \\ \hline
 
- Delete Article & \lstinline{"Confirm article delete: Cat Memes"} \\ \hline
+ Delete Article & \lstinline|"Confirm article delete: Cat Memes"| \\ \hline
 
  Update User Settings & 
 %% TODO: Figure out how to remove numbering and frame
@@ -111,9 +111,9 @@ Table~\ref{Table:CalypsoSecuredRoutes} lists the secured operations of Calypso w
  Operation & Authentication Message \\ 
  \hline \hline
 
- Update Profile Settings & \lstinline{"Save the profile settings: Espanol Public"} \\ \hline
+ Update Profile Settings & \lstinline|"Save the profile settings: Espanol Public"| \\ \hline
 
- Invite New Users to Site & \lstinline{"Invite new user(s): damian, durian, dominic"} \\ \hline
+ Invite New Users to Site & \lstinline|"Invite new user(s): damian, durian, John Smithson"| \\ \hline
 
  Change Site Address & 
 %% TODO: Figure out how to remove numbering and frame
@@ -124,7 +124,7 @@ Table~\ref{Table:CalypsoSecuredRoutes} lists the secured operations of Calypso w
 \end{lstlisting} 
 \\ \hline
 
- Change Site Theme & \lstinline{"Change theme to: Tangerine Orange"} \\ \hline
+ Change Site Theme & \lstinline|"Change theme to: Tangerine Orange"| \\ \hline
 
 \end{tabular}
 \caption{The operations of Calypso secured by transaction authentication.}
@@ -196,11 +196,11 @@ Table~\ref{Table:GogsSecuredRoutes} lists the secured operations with a sample a
  Operation & Authentication Message \\ 
  \hline \hline
 
- Delete Repository & \lstinline{"Confirm repository delete: damian/JS-OS"} \\ \hline
+ Delete Repository & \lstinline|"Confirm repository delete: damian/JS-OS"| \\ \hline
 
- Add SSH Key & \lstinline{"Add SSH key named: Damian's Laptop"} \\ \hline
+ Add SSH Key & \lstinline|"Add SSH key named: Damian's Laptop"| \\ \hline
 
- Delete SSH Key & \lstinline{"Delete SSH key named: Damian's Laptop"} \\ \hline
+ Delete SSH Key & \lstinline|"Delete SSH key named: Damian's Laptop"| \\ \hline
 
  Update Profile Settings & 
 %% TODO: Figure out how to remove numbering and frame
@@ -211,13 +211,13 @@ Table~\ref{Table:GogsSecuredRoutes} lists the secured operations with a sample a
 \end{lstlisting} 
 \\ \hline
 
- Set Primary Email & \lstinline{"Confirm new primary email: damianb@alum.mit.edu"} \\ \hline
+ Set Primary Email & \lstinline|"Confirm new primary email: damianb@alum.mit.edu"| \\ \hline
 
- Change Password & \lstinline{"Confirm password change"} \\ \hline
+ Change Password & \lstinline|"Confirm password change"| \\ \hline
 
- Leave Repository & \lstinline{"Leave repository named: JS-OS"} \\ \hline
+ Leave Repository & \lstinline|"Leave repository named: JS-OS"| \\ \hline
 
- Delete App Access Token & \lstinline{"Delete App named: Gogs-Watcher-App"} \\ \hline
+ Delete App Access Token & \lstinline|"Delete App named: Gogs-Watcher-App"| \\ \hline
 
  Publish New Release &
 %% TODO: Figure out how to remove numbering and frame
@@ -227,7 +227,7 @@ Table~\ref{Table:GogsSecuredRoutes} lists the secured operations with a sample a
 \end{lstlisting} 
 \\ \hline
 
-  Delete Web-Hook & \lstinline{"Delete webhook for: URL gogswatcher.app.com"} \\ \hline
+  Delete Web-Hook & \lstinline|"Delete webhook for: URL gogswatcher.app.com"| \\ \hline
 
 \end{tabular}
 \caption{The operations of Gogs secured by transaction authentication.}
