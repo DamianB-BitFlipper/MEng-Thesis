@@ -15,7 +15,7 @@ Each of the three case studies has its associated webauthn firewall configuratio
 
 \subsection{Overall Complexity}
 
-The total configuration file size evaluates the overall complexity of configuring the firewall. The contents of a configuration file can be broken into four categories:
+The total configuration file size evaluates the overall complexity of configuring the firewall. Table~\ref{Table:EvaluationOverallComplexity} lists the contents of a configuration file, sub-divided into four categories:
 
 \begin{itemize}[nosep]
 
@@ -29,7 +29,7 @@ The total configuration file size evaluates the overall complexity of configurin
 
 \end{itemize}
 
-The total file sizes and the respective four-way breakdown illustrate the overall and itemized complexity of using the firewall.
+The file sizes and the respective four-way breakdown illustrate the overall and itemized complexity of using the firewall.
  
 \begin{table}[h]
 \centering
@@ -70,6 +70,9 @@ The total file sizes and the respective four-way breakdown illustrate the overal
  \quad Miscellaneous & \quad 58 \\ \hline
 
 \end{tabular}
+\caption{A breakdown of the configuration file size for each case study. Each total is broken down into four categories with their respective lines of code contributions.}
+\label{Table:EvaluationOverallComplexity}
+
 \end{table}
 
 The firewall configuration file is the sole source of customization that dictates how the firewall interacts with a specific web service. Both Calypso and Gogs are production web services. Considering that they are secured by the webauthn firewall within approximately 250 lines of code, this supports the claimed advantages of the firewall's simplicity and organization. 
@@ -78,11 +81,19 @@ The firewall configuration file is the sole source of customization that dictate
 
 The configuration parameters, context retrieval and miscellaneous code are more or less fixed costs to the configuration file's complexity. Only the route handlers scales with the size of the service being secured. Conduit being the smallest and simplest web service has the smallest route handler cost. Gogs, on the opposite end of the spectrum, naturally has the largest cost. Since most routes may be secured using the domain specific language, the increase in route handler complexity increases slowly.
 
-The following bar chart plots the frequencies of lines of code needed to secure a new route among all three case studies. Two clear clusters emerge where the lower end of lines of code per route handler, those less than approximately 20 lines of code, correspond to uses of the domain specific language. The handlers greater than 20 lines of code are solely the custom handlers. It is natural to expect this divide since the custom handlers by nature perform more involved processing of a request than the DSL handlers and thus use more lines of code.
+Figure~\ref{Fig:IncrementalComplexity} plots the frequencies of lines of code needed to secure a new route among all three case studies. The bar chart can be partitioned into two clear clusters at approximately the 20 lines of code per route handler boundary. The bars on the left side with fewer than 20 lines correspond to uses of the domain specific language. The handlers greater than 20 lines of code are solely the custom handlers. It is natural to expect this divide since the custom handlers by nature perform more involved processing of a request than the DSL handlers and thus use more lines of code.
+
+%% 
+%% \iffalse
+%%  where the lower end of lines of code per route handler, the bars on the left who represent routes with less than approximately 20 lines of code, correspond to uses of the domain specific language. 
+%% \fi
+%% 
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=14cm]{LoC_routes_secured}
+  \caption{The frequencies of lines of code to secure a route with transaction authentication. The majority of the routes can be secured in 10 lines or less.}
+  \label{Fig:IncrementalComplexity}
 \end{figure}
 
 This chart also evidently demonstrates that most of the routes may be secured using only the domain specific language. Of all 20 routes secured among all three case studies, only 5 required a custom handler. This means that 75\% of the routes could be captured by the domain specific language. The average domain specific program to secure a route is 4 lines of code, and the average custom handler is 32 lines of code.
@@ -110,7 +121,7 @@ This chart also evidently demonstrates that most of the routes may be secured us
 
 \section{Frontend Modifications}
 
-The frontend of a web service must be modified slightly when integrating webauthn, regardless of whether the webauthn firewall is in use or not. The frontend issuing the webauthn operation must adhere to the protocol specification life cycle as described in Chapter~\ref{Chap:WebauthnTransactionAuthentication}. The total number of code changes to the frontend exceed that of the webauthn configuration file as follows:
+The frontend of a web service must be modified slightly when integrating webauthn, regardless of whether the webauthn firewall is in use or not. The frontend issuing the webauthn operation must adhere to the protocol specification life cycle as described in Chapter~\ref{Chap:WebauthnTransactionAuthentication}. Table~\ref{Table:EvaluationsFrontendModifications} lists the total number of code changes for each frontend of the case studies. For every case, the number of changes all exceed the sizes of the webauthn firewall configuration files.
 
 \begin{table}[h]
 \centering
@@ -127,10 +138,12 @@ The frontend of a web service must be modified slightly when integrating webauth
  Gogs & 570 \\ \hline
 
 \end{tabular}
+\caption{The number of code changes performed on each frontend of the case studies in order to support webauthn transaction authentication.}
+\label{Table:EvaluationsFrontendModifications}
 \end{table}
 
 %% TODO: Not only gogs, but the overall average?
-These code changes are not complex, but rather simple and pedestrian. There is boilerplate code offloaded to a JavaScript library. The nature of protecting an operation with webauthn on the frontend involves making a few library calls, error handling and piecing together the authentication message from the HTML data present. For example, each Gogs operation secured by webauthn involves on average 54 lines of code changes to the frontend. 
+These code changes are not complex, but rather simple and monotonous. There is boilerplate code delegated to a JavaScript library. The nature of protecting an operation with webauthn on the frontend involves making a few library calls, error handling and piecing together the authentication message from the HTML data present. For example, each Gogs operation secured by webauthn involves on average 54 lines of code changes to the frontend. 
 
 %% 
 %% \iffalse
@@ -143,7 +156,7 @@ These code changes are not complex, but rather simple and pedestrian. There is b
 
 \section{Backend Modifications}\label{Sec:BackendModifications}
 
-A significant advantage to using the webauthn firewall over integrating webauthn intrusively into a web service is the lack of modifications needed to the backend. Using the webauthn firewall is minimally invasive as demonstrated by the following table:
+A significant advantage to using the webauthn firewall over integrating webauthn intrusively into a web service is the lack of modifications needed to the backend. Table~\ref{Table:EvaluationsBackendModifications} demonstrates this fact --- using the webauthn firewall is minimally invasive to the backend.
 
 \begin{table}[h]
 \centering
@@ -160,11 +173,13 @@ A significant advantage to using the webauthn firewall over integrating webauthn
  Gogs & 169 \\ \hline
 
 \end{tabular}
+\caption{The number of code changes performed on each backend of the case studies in order to support the webauthn firewall.}
+\label{Table:EvaluationsBackendModifications}
 \end{table}
 
 The RESTful case studies, Conduit and Calypso, require no backend modifications. The Gogs case study, which is server-side rendered, only needs modifications to supply context. 
 
-Before the webauthn firewall became a mature idea, Gogs was partly webauthn secured intrusively. The intrusive Gogs case study protects 5 routes whereas the webauthn firewall study of Gogs covers 11 routes. Nevertheless, even with fewer routes protected, the invasive nature of securing Gogs is unmistakable.
+Before the webauthn firewall became a mature idea, Gogs was partly webauthn secured intrusively. The intrusive Gogs case study protects 5 routes whereas the webauthn firewall study of Gogs covers 11 routes. Nevertheless, even with fewer routes protected, the invasive nature of securing Gogs is unmistakable. Table~\ref{Table:EvaluationsComplexityDiffIntrusiveFirewall} backs this claim up plainly. The intrusive Gogs implementation is significantly more complex and more spread throughout Gogs than the webauthn firewall approach.
 
 \begin{table}[h]
 \centering
@@ -181,6 +196,7 @@ Before the webauthn firewall became a mature idea, Gogs was partly webauthn secu
 
 \end{tabular}
 \caption{Comparing the complexity differences between intrusive and webauthn firewall integration.}
+\label{Table:EvaluationsComplexityDiffIntrusiveFirewall}
 \end{table}
 
 Many of the additional lines of code for the intrusive webauthn integration of Gogs come from all of the plumbing code needed in to support and run webauthn. Webauthn needs its own database table with entries to record registered users. The backend must support webauthn registration and login. It must also include the webauthn code that verifies transaction authentication events. All of these functionalities come with the webauthn firewall for free, which explains the dramatic reduction in backend complexity when using the firewall.
@@ -202,14 +218,16 @@ The webauthn firewall acts as a gatekeeper between the frontend and backend. It 
 The experiment's data are collected as follows. The hardware is a quad-core Intel i7-6600U CPU @ 2.60GHz laptop machine. Each trial initializes a given number of users. Then each user proceeds to sequentially send 300 POST requests to the ``Change Email'' route as quickly as possible, timing the latency of each request. The data point for the trial is the $95^{th}$ percentile of the running times tail. When there are many users sending requests simultaneously, there is contention among them which accounts for the increase in latency.
 
 %% TODO: Make sure colors match up
-Three different scenarios are tested. The blue line measures the request latencies for using the firewall on users that have webauthn enabled. The orange line measures the request latencies for the firewall on users without webauthn enabled. The difference between these two lines is the overhead of validating a webauthn transaction versus simply letting the request pass through. The yellow line measures the latencies of sending these requests to the backend directly.
+Three different scenarios are tested and the results reported in Figure~\ref{Fig:PerformanceOverhead}. The blue line measures the request latencies for using the firewall on users that have webauthn enabled. The orange line measures the request latencies for the firewall on users without webauthn enabled. The difference between these two lines is the overhead of validating a webauthn transaction versus simply letting the request pass through. The yellow line measures the latencies of sending these requests to the backend directly.
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=14cm]{performance_latencies}
+  \caption{The run times of three different Gogs setups under load. The x-axis are the number of users issuing requests concurrently, and the y-axis is the run time latency. The three experiments are: using the firewall with webauthn enabled, using the firewall with webauthn disabled, issuing requests directly to the Gogs server without webauthn transaction authentication. There is a latency penalty to using the webauthn firewall.}
+  \label{Fig:PerformanceOverhead}
 \end{figure}
 
-For the most part, the blue and orange line remain tightly together signifying that there is little overhead from the actual validation of a webauthn transaction. Rather there is a significant gap between the direct connection and the firewall setup. This discrepancy arises from the implementation of the \lstinline{GetUserID} function of the Gogs firewall. The \lstinline{GetUserID} is a configurable function described in Section~\ref{Sec:ConfigurationParameters} which identifies the current user of a request received by the firewall. 
+As seen in Figure~\ref{Fig:PerformanceOverhead}, the blue and orange line remain tightly together meaning that there is little overhead from the actual validation of a webauthn transaction. Rather there is a significant gap between the direct connection and the firewall setup. This discrepancy arises from the implementation of the \lstinline{GetUserID} function of the Gogs firewall. The \lstinline{GetUserID} is a configurable function described in Section~\ref{Sec:ConfigurationParameters} which identifies the current user of a request received by the firewall. 
 
 The firewall uses the current user information to determine for every incoming HTTP request whether that user has webauthn enabled and to verify the transaction accordingly if so. In Gogs, the user of a request is identified by a session ID which only the backend can translate to a user ID. Therefore the \lstinline{GetUserID} for the Gogs firewall involves a HTTP GET request to the backend to retrieve the user ID. Therefore, every request that passes through the firewall invokes an additional HTTP request accounting for the substantial overhead when using the firewall. Under the 30 user load, the additional overhead of this \lstinline{GetUserID} operation added approximately 70 milliseconds to the overall latency.
 
