@@ -4,9 +4,9 @@
 %% You can process specific files by typing their names in at the 
 %% \files=
 %% prompt when you run the file main.tex through LaTeX.
-\chapter{Webauthn Transaction Authentication}\label{Chap:WebauthnTransactionAuthentication}
+\chapter{WebAuthn Transaction Authentication}\label{Chap:WebauthnTransactionAuthentication}
 
-Webauthn transaction authentication is a protocol specification for authenticating high-risk user operations, even after login. The specification describes a sequence of steps that must be followed in order to authenticate properly. These steps can be split into four stages: registration, the setup, the cryptographic attestation and then the verification. 
+WebAuthn transaction authentication is a protocol specification for authenticating high-risk user operations, even after login. The specification describes a sequence of steps that must be followed in order to authenticate properly. These steps can be split into four stages: registration, the setup, the cryptographic attestation and then the verification. 
 
 %% 
 %% \iffalse
@@ -17,7 +17,7 @@ Webauthn transaction authentication is a protocol specification for authenticati
 \begin{enumerate}[nosep]
 \item Registration: Makes a record of the user and their cryptographic credential into a database. Registration is only performed once per user, and the database record is used by the verification step later on.
 
-\item Setup: Initiated by the user's web-browser and involves a priming exchange between it and the webauthn verification end.
+\item Setup: Initiated by the user's web-browser and involves a priming exchange between it and the WebAuthn verification end.
 
 \item Cryptographic Attestation: Occurs on the hardware authenticator device after the user confirms the operation. The threat model assumes that this attestation is secure.
 
@@ -25,7 +25,7 @@ Webauthn transaction authentication is a protocol specification for authenticati
 
 \end{enumerate}
 
-The rest of this chapter describes these steps in more detail and uses the webauthn firewall as the verification end. It contains the database of user public key credentials and performs the validation to authorize high-risk operations or not. 
+The rest of this chapter describes these steps in more detail and uses the WebAuthn firewall as the verification end. It contains the database of user public key credentials and performs the validation to authorize high-risk operations or not. 
 
 %% 
 %% \iffalse
@@ -44,14 +44,14 @@ The rest of this chapter describes these steps in more detail and uses the webau
 %% \fi
 %% 
 
-\section{Webauthn Registration}
+\section{WebAuthn Registration}
 
 %% https://swimlanes.io/#fZFNboMwEIX3PsUcoFwgqioliFU3FZWa9WC/BEtgt/aQiNtnSDYQSrZ+P36fZj9IiyDessRE70XxQUc0xSHFa0baUZWFm87nlsoYAqz4GIyZWUgTP0j+NFWoSFVwO/qGDL9U429AFmNCFPzjKhNYBQ6OEnr0jdbZlruOwxlkzHOCnteVkxlqXk3az7kWxoWyavwalNbSJ8a3F+1rlI3cBvj9ZVRoC3+Be0BPCepZbItMWcfNhc2qGjYmN/ufJJJjvRpn3AA=
 %% Zoom in to 200% on web-browser and screenshot, convert to pdf
 \begin{figure}[h]
   \centering
   \includegraphics[width=16cm]{registration_flow_swimlanes}
-  \caption{The flow of events during webauthn registration.}
+  \caption{The flow of events during WebAuthn registration.}
   \label{Fig:WebauthnRegistrationFlow}
 \end{figure}
 
@@ -83,13 +83,13 @@ The registration process begins with a setup of its own, where the web-browser r
 \begin{figure}[h]
   \centering
   \includegraphics[width=12.5cm]{txauthn_flow_swimlanes}
-  \caption{The flow of events during webauthn transaction authentication, subdivided into three stages.}
+  \caption{The flow of events during WebAuthn transaction authentication, subdivided into three stages.}
   \label{Fig:TxAuthnFlow}
 \end{figure}
 
 % TODO: Talk about server-side rendering preloading
 
-The setup for a transaction authenticate event originates from the frontend. Figure~\ref{TxAuthnFlow} illustrate the setup stage of a transaction authentication event. There are several designs to setup a webauthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the frontend waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the frontend preemptively initiates the setup, without knowing whether the user will even perform any secured operation on the web-page. 
+The setup for a transaction authenticate event originates from the frontend. Figure~\ref{TxAuthnFlow} illustrate the setup stage of a transaction authentication event. There are several designs to setup a WebAuthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the frontend waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the frontend preemptively initiates the setup, without knowing whether the user will even perform any secured operation on the web-page. 
 
 In either case, the setup is a POST request to the firewall. The payload for the setup POST request is an authentication message that will eventually be displayed to the user on their hardware device. The message is constructed from user input and additional information contained in the HTML of the webpage, but in all three case studies of this thesis, that was always enough. In response to the POST request, the frontend receives a few parameters:
 
@@ -111,7 +111,7 @@ In either case, the setup is a POST request to the firewall. The payload for the
 \begin{enumerate}[nosep]
 \item A random \lstinline{challenge} nonce: The firewall remembers it locally in the session data associated with the request. When the firewall processes the protected request, it will verify that the challenge included in the returned authentication data matches the one previously sent and remembered in the session. An adversary cannot intercept and replay old protected requests since it is exceedingly unlikely that future challenges from the firewall will exactly match the challenge in the intercepted request.
 
-\item An \lstinline{extensions} field: The firewall transforms the authentication message sent to it into a webauthn-compatible form for the hardware authenticator. It then emplaces it into the \lstinline{extensions} field which the authenticator reads and handles as a transaction authentication operation.
+\item An \lstinline{extensions} field: The firewall transforms the authentication message sent to it into a WebAuthn-compatible form for the hardware authenticator. It then emplaces it into the \lstinline{extensions} field, which the authenticator reads and handles as a transaction authentication operation.
 
 \end{enumerate}
 
@@ -137,7 +137,7 @@ In either case, the setup is a POST request to the firewall. The payload for the
 
 The request options from the firewall go through the frontend and are passed on to the hardware authenticator device. The threat model assumes that only the firewall, backend and hardware authenticator are secure. At any point, the frontend or web-browser could modify these options, but any tampering will be detected later on and denied authorization. 
 
-Figure~\ref{Fig:TxAuthnFlow} outlines the role of the hardware authenticator. The hardware device parses the request options, extracts from the \lstinline{extensions} field the authentication message and presents that to the user. The authentication message is in the form of a confirmation for some requested operation and is answered either by ``yes'' or ``no''. If the user attests ``yes'', the hardware device cryptographically signs a data object which is returned as an additional field within the HTTP request to the firewall for verification.
+Figure~\ref{Fig:TxAuthnFlow} outlines the role of the hardware authenticator. The hardware device parses the request options, extracts from the \lstinline{extensions} field the authentication message and presents that to the user. The authentication message is in the form of a confirmation for some requested operation and is answered either by ``yes'' or ``no''. If the user attests ``yes'', the hardware device cryptographically signs a data object, which is returned as an additional field within the HTTP request to the firewall for verification.
 
 The response of the hardware authenticator includes a \lstinline{clientDataJSON} object containing the authentication message displayed to the user a well as the \lstinline{Challenge} from the setup stage. A cryptographic signature of the \lstinline{clientDataJSON} is also included. The signature is computed using Elliptic Curve Digital Signature Algorithm (ECDSA) paired with the SHA-256 hash function. There are other fields, as well, for plumbing to help the firewall know what parameters to use to validate this response.
 
@@ -165,9 +165,9 @@ The response of the hardware authenticator includes a \lstinline{clientDataJSON}
 %% \fi
 %% 
 
-\section{Webauthn Firewall Verification}\label{Sec:WebauthnFirewallVerification}
+\section{WebAuthn Firewall Verification}\label{Sec:WebauthnFirewallVerification}
 
-The webauthn firewall receives an HTTP request on a protected route with all of its usual parameters plus the authentication data object. The firewall must verify the integrity of this object as well that it corresponds with the intent of the HTTP request. In other words, it must detect whether any code not in the trusted computing base, such as the frontend, tampered with the authentication data. Also, it must make sure that the operation the user attested to on their hardware device that resulted in this authentication data object is in fact the operation to be performed if the protected HTTP request were to be permitted through. 
+The WebAuthn firewall receives an HTTP request on a protected route with all of its usual parameters plus the authentication data object. The firewall must verify the integrity of this object as well that it corresponds with the intent of the HTTP request. In other words, it must detect whether any code not in the trusted computing base, such as the frontend, tampered with the authentication data. Also, it must make sure that the operation the user attested to on their hardware device that resulted in this authentication data object is in fact the operation to be performed if the protected HTTP request were to be permitted through. 
 
 Figure~\ref{Fig:TxAuthnFlow} illustrates the main steps of the verification stage. The three main steps are verifying the challenge, the authentication message and the authentication data signature:
 

@@ -69,7 +69,7 @@ Transaction authentication defends against unauthorized and unwanted operations 
 
 Transaction authentication is often understood as a mechanism to protect the user by defending against unauthorized operations. Intrusive integration of transaction authentication into a web service has a collateral benefit of being able to shrink the trusted computing base on the server-side. The original threat model assumes that all server code is secure. However, if a web service RPC isolates its various components internally, then only the component actually executing the given operation must be trusted. 
 
-For example, the Gogs web sever has code and database tables pertaining to repository actions. They are independent of any other server operations and can be RPC isolated into a separate operating system process. This process is the only one with the privileges to execute repository actions, from renaming to deleting a repository. Consequently, the web server must interface with this process in order to operate on any repository. If this RPC isolated process also contains webauthn verification code, it can perform the transaction authentication validation on its own. Even if any other aspect of the web server were compromised, the webauthn protected repository requests sent to this process cannot be tampered with since they would fail the verification.
+For example, the Gogs web sever has code and database tables pertaining to repository actions. They are independent of any other server operations and can be RPC isolated into a separate operating system process. This process is the only one with the privileges to execute repository actions, from renaming to deleting a repository. Consequently, the web server must interface with this process in order to operate on any repository. If this RPC isolated process also contains WebAuthn verification code, it can perform the transaction authentication validation on its own. Even if any other aspect of the web server were compromised, the WebAuthn protected repository requests sent to this process cannot be tampered with since they would fail the verification.
 
 %% 
 %% \iffalse
@@ -77,7 +77,7 @@ For example, the Gogs web sever has code and database tables pertaining to repos
 
 %% However, it has the collateral benefit of being able to shrink the trusted computing base 
 
-%% This is the case when said component is the one performing the webauthn verification.
+%% This is the case when said component is the one performing the WebAuthn verification.
 %%  transaction authentication secured repository requests cannot be modified since the trusted component would fail its verification.
 %% \fi
 %% 
@@ -93,7 +93,7 @@ For example, the Gogs web sever has code and database tables pertaining to repos
 Securing a route with transaction authentication requires careful planning to avoid any vulnerabilities of directly or indirectly subverting the protection. Direct subversion actively evades the transaction authentication protection. Indirect subversion tricks the user into transaction authenticating some operation that actually is undesired.
 
 \subsection{Direct Subversion}
-If the disable webauthn event were not transaction authentication secured, a trivial example of direct subversion is possible. The adversary could disable webauthn before performing any sensitive operation. To avoid this, the disable webauthn operation is one of the default operations protected by the firewall as discussed in Section~\ref{Sec:ConfigurationParameters}.
+If the disable WebAuthn event were not transaction authentication secured, a trivial example of direct subversion is possible. The adversary could disable WebAuthn before performing any sensitive operation. To avoid this, the disable WebAuthn operation is one of the default operations protected by the firewall as discussed in Section~\ref{Sec:ConfigurationParameters}.
 
 %% 
 %% \iffalse
@@ -101,14 +101,14 @@ If the disable webauthn event were not transaction authentication secured, a tri
 %% \fi
 %% 
 
-Less obvious direct subversion attacks are also possible. In Gogs, an adversary could create a new dummy user without webauthn enabled. Then they could add the dummy user as an owner of a target repository and perform the delete operation from the unsecured user. If not carefully protected, such as requiring transaction authentication also for adding new repository owners, this sequence of operations could subvert the protected route of repository deletion.
+Less obvious direct subversion attacks are also possible. In Gogs, an adversary could create a new dummy user without WebAuthn enabled. Then they could add the dummy user as an owner of a target repository and perform the delete operation from the unsecured user. If not carefully protected, such as requiring transaction authentication also for adding new repository owners, this sequence of operations could subvert the protected route of repository deletion.
 
 Direct subversion opportunities might be detectable by performing route search and analysis similar to symbolic execution. Such a system could scan the web service's code and trace all possible chains of operations that could get around the transaction authentication protection of a specific route.
 
 \subsection{Indirect Subversion}
 Indirect subversion opportunities are harder to detect since they involve a human element. These attacks trick the user into transaction authenticating a seemingly innocuous operation when actually they are authorizing something sensitive. 
 
-An example within Gogs is the following scenario. A user has two repositories $A$ and $B$. The repository $A$ is important whereas $B$ is garbage. In this scenario, repositories may be deleted or renamed. Deletion is webauthn protected whereas renaming is not.
+An example within Gogs is the following scenario. A user has two repositories $A$ and $B$. The repository $A$ is important whereas $B$ is garbage. In this scenario, repositories may be deleted or renamed. Deletion is WebAuthn protected whereas renaming is not.
 
 When the user decides to delete the garbage repository $B$, the adversary quickly and quietly renames $A$ to $B$ and $B$ to $A$. So by the time the user authorizes the deletion of $B$, repository $B$ is actually the important one. In doing so, the adversary hijacked the user's faithful deletion of the original garbage repository $B$ in order to delete the important repository $A$. 
 
@@ -122,6 +122,6 @@ The user believes that they are doing one operation, but in reality, they are do
 
 %% 
 %% \iffalse
-%% A trivial example of a direct subversion attack would be, if the disable webauthn event were not transaction authentication secured, the adversary could disable webauthn before performing their desired sensitive operation.
+%% A trivial example of a direct subversion attack would be, if the disable WebAuthn event were not transaction authentication secured, the adversary could disable WebAuthn before performing their desired sensitive operation.
 %% \fi
 %% 

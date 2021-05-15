@@ -7,11 +7,11 @@
 
 \chapter{Case Studies}\label{Chap:CaseStudies}
 
-This chapter presents three case studies used to evaluate the webauthn firewall. Each case study involves using the webauthn firewall on a web service that is unique in some fundamental way. The variability stress tests the firewall's two main objectives: minimal intrusiveness and ease of configuration. The case studies provide guidance on what aspects of the firewall need configuration and precisely how detailed versus general those configurable options should be to be beneficial without becoming overly burdensome.
+This chapter presents three case studies used to evaluate the WebAuthn firewall. Each case study involves using the WebAuthn firewall on a web service that is unique in some fundamental way. The variability stress tests the firewall's two main objectives: minimal intrusiveness and ease of configuration. The case studies provide guidance on what aspects of the firewall need configuration and precisely how detailed versus general those configurable options should be to be beneficial without becoming overly burdensome.
 
 \section{Conduit}
 
-Conduit is a simple RESTful blog web service \cite{TODO-conduit}. It is not a production service, rather an educational service to demonstrate the flexibility of RESTful web-applications. The project supplies many simple frontend and backend implementations, written in various programming languages and frameworks, but following the same API. The case study focused on a React based frontend \cite{TODO-Conduit-React-Frontend} and a Golang based backend \cite{TODO-Conduit-Go-Backend}. Conduit is the best-case application for the webauthn firewall, a RESTful web service with basic functionality to protect. No backend modifications are necessary to integrate webauthn.
+Conduit is a simple RESTful blog web service \cite{conduit}. It is not a production service, rather an educational service to demonstrate the flexibility of RESTful web-applications. The project supplies many simple frontend and backend implementations, written in various programming languages and frameworks, but following the same API. The case study focused on a React based frontend \cite{conduit-frontend} and a Golang based backend \cite{conduit-backend}. Conduit is the best-case application for the WebAuthn firewall, a RESTful web service with basic functionality to protect. No backend modifications are necessary to integrate WebAuthn.
 
 %% 
 %% \iffalse
@@ -24,7 +24,7 @@ Conduit is a simple RESTful blog web service \cite{TODO-conduit}. It is not a pr
 
 \subsection{Context Retrieval}\label{Sec:Conduit_ContextRetrieval}
 
-A major benefit of a RESTful web-application is that the backend exposes many useful context routes. By design, a RESTful frontend performs the necessary rendering on the user's web-browser and must retrieve user specific information from the backend. These routes are useful for webauthn context retrieval as well. For example, the backend already implements routes such as getting an article by its ID. And if not, then there certainly will be a tangential route such as requesting all comments of an article to search for a specific one by ID. Since most of the modifications necessary to the backend when integrating the webauthn firewall are for context routes, this aspect of RESTful applications make that easy.
+A major benefit of a RESTful web-application is that the backend exposes many useful context routes. By design, a RESTful frontend performs the necessary rendering on the user's web-browser and must retrieve user specific information from the backend. These routes are useful for WebAuthn context retrieval as well. For example, the backend already implements routes such as getting an article by its ID. And if not, then there certainly will be a tangential route such as requesting all comments of an article to search for a specific one by ID. Since most of the modifications necessary to the backend when integrating the WebAuthn firewall are for context routes, this aspect of RESTful applications make that easy.
 
 \subsection{Secured Routes}
 
@@ -38,7 +38,7 @@ The Conduit case study has three protected routes. Table~\ref{Table:ConduitSecur
  Operation & Authentication Message \\ 
  \hline \hline
 
- Delete Comment & \lstinline|"Confirm comment delete: I love webauthn"| \\ \hline
+ Delete Comment & \lstinline|"Confirm comment delete: I love WebAuthn"| \\ \hline
 
  Delete Article & \lstinline|"Confirm article delete: Cat Memes"| \\ \hline
 
@@ -66,14 +66,14 @@ The simplicity of the Conduit application does not challenge the domain specific
 
 \section{Calypso}
 
-Calypso is a RESTful frontend for a WordPress admin panel \cite{TODO-calypso}. This is a production service, with far greater complexity than the Conduit application. Also, unlike Conduit with a backend running locally, which can be modified, Calypso accesses the official WordPress backend servers. These servers are closed-source and their modification is out of question. Whereas avoiding backend modifications for Conduit is a favorable result, with Calypso it is a necessity. Nonetheless, integrating webauthn is possible because the RESTful API of WordPress was complete enough to satisfy the needs of the webauthn firewall.
+Calypso is a RESTful frontend for a WordPress admin panel \cite{calypso}. This is a production service, with far greater complexity than the Conduit application. Also, unlike Conduit with a backend running locally, which can be modified, Calypso accesses the official WordPress backend servers. These servers are closed-source and their modification is out of question. Whereas avoiding backend modifications for Conduit is a favorable result, with Calypso it is a necessity. Nonetheless, integrating WebAuthn is possible because the RESTful API of WordPress was complete enough to satisfy the needs of the WebAuthn firewall.
 
 \subsection{Multi-Target Proxying}
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=14cm]{multitarget_calypso_drawio}
-  \caption{The webauthn firewall must support two backend targets for Calypso.}
+  \caption{The WebAuthn firewall must support two backend targets for Calypso.}
   \label{Fig:MultiTargetCalypso}
 \end{figure}
 
@@ -81,14 +81,14 @@ Unlike the other two case studies, a point of complexity that Calypso has is tha
 
 \subsection{Login}\label{Sec:CalypsoLogin}
 
-The webauthn firewall automatically protects a number of core webauthn routes, including the route for login, as described in Section~\ref{Sec:DefaultHandlers}. However, the Calypso project approaches login in an atypical fashion. Normally a service has a dedicated route for login. Calypso shares a login route with other operations, so HTTP requests are identified by an \lstinline{"action"} field in their payload, similarly as described in Section~\ref{Sec:CustomHandlers}. As a result, the default login handler cannot support Calypso directly. Extending the default login handler to be customizable for this one specific case would make the firewall's configuration too complicated. Rather, a custom login handler implements the Calypso login event. The login handler roughly resembles the following Go pseudo-code:
+The WebAuthn firewall automatically protects a number of core WebAuthn routes, including the route for login, as described in Section~\ref{Sec:DefaultHandlers}. However, the Calypso project approaches login in an atypical fashion. Normally a service has a dedicated route for login. Calypso shares a login route with other operations, so HTTP requests are identified by an \lstinline{"action"} field in their payload, similarly as described in Section~\ref{Sec:CustomHandlers}. As a result, the default login handler cannot support Calypso directly. Extending the default login handler to be customizable for this one specific case would make the firewall's configuration too complicated. Rather, a custom login handler implements the Calypso login event. The login handler roughly resembles the following Go pseudo-code:
 
 \begin{lstlisting}[float=h]
 func finishLogin(w http.ResponseWriter, req *wf.ExtendedRequest) {
   action := req.Get("action")
   switch action {
     case "login-endpoint":
-      // Webauthn verify the login request
+      // WebAuthn verify the login request
       VerifyLogin(w, req)
     default:
       // Other requests go right through
@@ -97,7 +97,7 @@ func finishLogin(w http.ResponseWriter, req *wf.ExtendedRequest) {
 }
 \end{lstlisting}
 
-The handler listens on the \lstinline{"wordpress.com/wp-login.php"} route. It extracts the \lstinline{"action"} field in the request payload and validates the login attempt only if the action is \lstinline{"login-endpoint"}. The \lstinline{VerifyLogin} function performs the webauthn authentication and only upon successful verification does it allow the request to proceed through the firewall. Otherwise, all other requests are proxied through with no additional checks.
+The handler listens on the \lstinline{"wordpress.com/wp-login.php"} route. It extracts the \lstinline{"action"} field in the request payload and validates the login attempt only if the action is \lstinline{"login-endpoint"}. The \lstinline{VerifyLogin} function performs the WebAuthn authentication and only upon successful verification does it allow the request to proceed through the firewall. Otherwise, all other requests are proxied through with no additional checks.
 
 \subsection{Secured Routes}\label{Sec:CalypsoSecuredRoutes}
 
@@ -152,7 +152,7 @@ The \lstinline{Authn} operation string formats the argument of \lstinline{wf.Get
 
 \section{Gogs}
 
-Gogs is a server-side rendered self-hosted Git web service \cite{TODO-gogs}. A server-side rendered web-application presents its own set of challenges to the webauthn firewall. Section~\ref{Sec:ProxyingRequests} explains how the firewall has to be the end-point interacting with the user's web-browser. The firewall must obtain the context from the Gogs backend. The backend does not, however, conveniently expose context routes like RESTful backends as discussed in Section~\ref{Sec:Conduit_ContextRetrieval}.
+Gogs is a server-side rendered self-hosted Git web service \cite{gogs}. A server-side rendered web-application presents its own set of challenges to the WebAuthn firewall. Section~\ref{Sec:ProxyingRequests} explains how the firewall has to be the end-point interacting with the user's web-browser. The firewall must obtain the context from the Gogs backend. The backend does not, however, conveniently expose context routes like RESTful backends as discussed in Section~\ref{Sec:Conduit_ContextRetrieval}.
 
 %% 
 %% \iffalse
@@ -160,11 +160,11 @@ Gogs is a server-side rendered self-hosted Git web service \cite{TODO-gogs}. A s
 %% \fi
 %% 
 
-\subsection{Intrusive Webauthn}
+\subsection{Intrusive WebAuthn}
 
-The Gogs web service was the first of the three case-studies. Before the webauthn firewall became a mature idea, part of Gogs was secured in the traditional, intrusive fashion described in Section~\ref{Sec:StatusQuo}. This work is redone using the webauthn firewall approach once it proved itself as a prospective design approach.
+The Gogs web service was the first of the three case-studies. Before the WebAuthn firewall became a mature idea, part of Gogs was secured in the traditional, intrusive fashion described in Section~\ref{Sec:StatusQuo}. This work is redone using the WebAuthn firewall approach once it proved itself as a prospective design approach.
 
-The two main challenges with integrating webauthn into Gogs intrusively are the database adapter and organizational difficulties. Webauthn needs a database table to record entries of users' public key credentials. Simply creating a new table in Gogs requires writing a custom database adapter for that table and modifying the codebase in a number of separate locations. Furthermore, the handlers for various Gogs routes are spread throughout the code. Keeping track of which routes are webauthn secured becomes increasingly more difficult as more routes are protected.
+The two main challenges with integrating WebAuthn into Gogs intrusively are the database adapter and organizational difficulties. WebAuthn needs a database table to record entries of users' public key credentials. Simply creating a new table in Gogs requires writing a custom database adapter for that table and modifying the codebase in a number of separate locations. Furthermore, the handlers for various Gogs routes are spread throughout the code. Keeping track of which routes are WebAuthn secured becomes increasingly more difficult as more routes are protected.
 
 %% 
 %% \iffalse
@@ -174,7 +174,7 @@ The two main challenges with integrating webauthn into Gogs intrusively are the 
 
 \subsection{Context Retrieval}
 
-A downside to server-side rendering web services when compared to RESTful services when it comes to webauthn firewall integration is the lack of pre-built context routes. Effectively, the API routes in the RESTful backend services act as the context routes. Gogs, being a server-side rendering backend, must be modified to include those context routes. Some Gogs routes need additional context to retrieve objects such as a \lstinline{"repository"} or \lstinline{"webhook"}. Gogs serves this context information out of a \lstinline{"server_context/<type>/<args>"} route. The \lstinline{<type>} refers to what type of object is being requested (e.g., repository, webhook, etc.). Each context type has its own handler in Gogs, which interprets the \lstinline{<args>} to retrieve the correct context object.
+A downside to server-side rendering web services when compared to RESTful services when it comes to WebAuthn firewall integration is the lack of pre-built context routes. Effectively, the API routes in the RESTful backend services act as the context routes. Gogs, being a server-side rendering backend, must be modified to include those context routes. Some Gogs routes need additional context to retrieve objects such as a \lstinline{"repository"} or \lstinline{"webhook"}. Gogs serves this context information out of a \lstinline{"server_context/<type>/<args>"} route. The \lstinline{<type>} refers to what type of object is being requested (e.g., repository, webhook, etc.). Each context type has its own handler in Gogs, which interprets the \lstinline{<args>} to retrieve the correct context object.
 
 %% 
 %% \iffalse
@@ -184,9 +184,9 @@ A downside to server-side rendering web services when compared to RESTful servic
 
 \subsection{Secured Routes}
 
-While integrating webauthn into Gogs during the case study, every HTTP route of the web service is categorized whether it should be protected by transaction authentication or not. This judgment is made by weighing the cost versus the benefit of protecting that route. Protecting a route is not free, most heavily affecting the user experience. Routes are protected if the harm due to malicious hijacking justifies the burden to the user's experience.
+While integrating WebAuthn into Gogs during the case study, every HTTP route of the web service is categorized whether it should be protected by transaction authentication or not. This judgment is made by weighing the cost versus the benefit of protecting that route. Protecting a route is not free, most heavily affecting the user experience. Routes are protected if the harm due to malicious hijacking justifies the burden to the user's experience.
 
-Table~\ref{Table:GogsSecuredRoutes} lists the secured operations with a sample authentication message for each. It presents an overview for the types of operations that could warrant webauthn transaction authentication.
+Table~\ref{Table:GogsSecuredRoutes} lists the secured operations with a sample authentication message for each. It presents an overview for the types of operations that could warrant WebAuthn transaction authentication.
 
 \begin{table}[h]
 \centering
@@ -236,7 +236,7 @@ Table~\ref{Table:GogsSecuredRoutes} lists the secured operations with a sample a
 
 \subsection{Custom Handlers}\label{Sec:Gogs_CustomHandlers}
 
-As with the other case-studies, most of the routes are simple and easy to secure using the domain specific language. At most they require a context retrieval to fill a single format tag. Within the Gogs service, the ``Delete Repository'' and ``Set Primary Email'' operations in Table~\ref{Table:GogsSecuredRoutes} each share the same HTTP route for multiple different HTTP operations. Similarly to the login route of Calypso discussed in Section~\ref{Sec:CalypsoLogin}, requests have an \lstinline{"action"} field in their payload that delineates the operation type. Only certain actions warrant being transaction authenticated. Custom handlers are used in these cases, to parse the \lstinline{"action"} field and webauthn secure only when necessary.
+As with the other case-studies, most of the routes are simple and easy to secure using the domain specific language. At most they require a context retrieval to fill a single format tag. Within the Gogs service, the ``Delete Repository'' and ``Set Primary Email'' operations in Table~\ref{Table:GogsSecuredRoutes} each share the same HTTP route for multiple different HTTP operations. Similarly to the login route of Calypso discussed in Section~\ref{Sec:CalypsoLogin}, requests have an \lstinline{"action"} field in their payload that delineates the operation type. Only certain actions warrant being transaction authenticated. Custom handlers are used in these cases, to parse the \lstinline{"action"} field and WebAuthn secure only when necessary.
 
  %% 
 %% \iffalse
