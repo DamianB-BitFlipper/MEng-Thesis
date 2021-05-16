@@ -85,9 +85,9 @@ In contrast, the threat model for traditional two-factor authentication assumes 
 \section{Transaction Authentication}
 
 %% 
-\iffalse
-Transaction authentication defends against a class of vulnerabilities not covered by traditional two-factor authentication. 
-\fi
+%% \iffalse
+%% Transaction authentication defends against a class of vulnerabilities not covered by traditional two-factor authentication. 
+%% \fi
 %% 
 
 The purpose of transaction authentication is to require ``high-risk'' operations to be individually authenticated by the user's hardware authenticator, despite the user being already logged in. 
@@ -306,6 +306,10 @@ The thesis also gives insights into best practices relating to utilizing WebAuth
 %% Each  how well it can support a variety of different web applications, each with different 
 %% \fi
 %% 
+
+\subsection{Source Code}
+
+The source code of the WebAuthn firewall and case studies is publicly available at \url{https://github.com/JSmith-BitFlipper/webauthn-firewall-proxy} under the MIT License. Cheers! 
 
 \section{Thesis Outline}
 
