@@ -6,7 +6,26 @@
 %% prompt when you run the file main.tex through LaTeX.
 \chapter{WebAuthn Transaction Authentication}\label{Chap:WebauthnTransactionAuthentication}
 
-WebAuthn transaction authentication is a protocol specification for authenticating high-risk user operations, even after login. The specification describes a sequence of steps that must be followed in order to authenticate properly. These steps can be split into four stages: registration, the setup, the cryptographic attestation and then the verification. 
+%% Detailed diagram https://swimlanes.io/#nVPJTsNADL3nK/wBlA+oEFJbVXAACdECx8qZuMkozUyYcbr8Pc6mLKVAuUWTt9h+9qzghAxrhWwd3E0m9/BB4WTu7MGTm8LSM4Y77RNYWGNIsbYmCDZTWBEXOawYYwoCY5mGvIUjlDfs5IUIGXlfEXpYEMt3cnrbgpYmauVf6bMgzzcwG+o8tzqV8Tm7dTcROMooC8VGJbjboYkJgmDMgHHbixJMAr6B5ZHJeAF6OGhOqlLMbVfCprQ75Wxjh3miFcyYpWasJzVqdNYf91U2Vacj+lupqqzZapd5sDm5xnWAO2tupWODXDhxva7Pwdia6H9N8nG9fumC/J/3hZirlxNwglzHW6pBhqwS8uCld4q6HxdlHsiUk+tvq+ZuWyFELzryUI06LtopX1q+hFRaF+VIkd4LGeuGWsW2xLhxHgMuaj9Zm4IcRlGOOy/kMhWkdAJtIEK5VKn0qrp8GwdoD3vc6ej745ijSkk+V+T25Qr1Q20Mx5DlkVQhlzDCDmE/rozPZSHoD9c6wH8B
+
+WebAuthn transaction authentication is a protocol specification for authenticating high-risk user operations, even after login. The specification describes a sequence of steps that must be followed in order to authenticate properly. There is registration and then transaction authentication, which can be split into three stages: the setup, the cryptographic attestation and then the verification. Figure~\ref{Fig:TxAuthnFlowOverview} gives a simplified overview of the transaction authentication process. It visualizes the order of communication among the hardware authenticator, the web-browser, the WebAuthn verification end and backend server.
+
+%% 
+%% \iffalse
+%% These steps can be split into four stages: registration, the setup, the cryptographic attestation and then the verification.
+%% Transaction authentication pertains to the setup, cryptographic attestation and verification stages. 
+%% \fi
+%% 
+
+%% https://swimlanes.io/#jVJBbsIwELz7FfsA6ANQVSkgpF4qVQ1tj2hxltgiWaf2BsTva4cikpRSbpZndnZm7KwVQyxWozgPj9PpE3zSZjr37hDIz2AZBDeVDQYWjpm0WMdKrWeQk7QN5IIlKdUbgajwQd5uk2Qkw5KLM/uNvloKohQ7oSushSeMAHIBnmqqN1FOG6wq5JJAqfEEjN0uEpk4WVonuWMjrvTYGKshE4m78RRgZDjrt9CTmXQIP8ALhdAl7ZyP6O9JRTveWl8HcA35ny0D3i+zuS0ZpfUEBytm5H0Q9d6Wn1er13PJkxv6f9Tf3RxBDMqp9sSGGkUbChBiBiouwH8yl/V7rGxh5Xj9AeeodxSPOfl9qqUfQqkhejN2aBwHuuOXDPjf
+%% Zoom out to 90% on web-browser and screenshot, convert to pdf
+%% :screenshot --selector .diagram --filename /tmp/txauthn_flow.png (in firefox console)
+\begin{figure}
+  \centering
+  \includegraphics[width=16cm]{txauthn_flow_overview_swimlanes}
+  \caption{A simplified overview of the flow of events during WebAuthn transaction authentication, subdivided into three stages.}
+  \label{Fig:TxAuthnFlowOverview}
+\end{figure}
 
 %% 
 %% \iffalse
@@ -73,23 +92,21 @@ Figure~\ref{Fig:WebauthnRegistrationFlow} illustrates the flow of events during 
 %% \fi
 %% 
 
-The registration process begins with a setup of its own, where the web-browser requests a few parameters from the firewall, most notably a random challenge nonce. The firewall remembers the challenge it sent as a part of the session data associated with the registration setup request. The challenge nonce prevents replay attacks \cite{TODO-replay-attack}. There are a few other parameters, but they are mainly for the hardware device to know what type of credential the firewall is expecting to receive. The hardware device sends over its public key credential for the firewall to save, with the challenge signed by that credential. The firewall receives an HTTP POST request containing this public key credential. The POST request also contains identifying information of the current user. The firewall verifies that the challenge is matches, and upon success, stores the credential and associated user ID into a database row.
+The registration process begins with a setup of its own, where the web-browser requests a few parameters from the firewall, most notably a random challenge nonce. The firewall remembers the challenge it sent as a part of the session data associated with the registration setup request. The challenge nonce prevents replay attacks. There are a few other parameters, but they are mainly for the hardware device to know what type of credential the firewall is expecting to receive. The hardware device sends over its public key credential for the firewall to save, with the challenge signed by that credential. The firewall receives an HTTP POST request containing this public key credential. The POST request also contains identifying information of the current user. The firewall verifies that the challenge is matches, and upon success, stores the credential and associated user ID into a database row.
 
 \section{Transaction Authentication Setup}\label{Sec:TransactionAuthenticationSetup}
 
-%% https://swimlanes.io/#nVPJTsNADL3nK/wBlA+oEFJbVXAACdECx8qZuMkozUyYcbr8Pc6mLKVAuUWTt9h+9qzghAxrhWwd3E0m9/BB4WTu7MGTm8LSM4Y77RNYWGNIsbYmCDZTWBEXOawYYwoCY5mGvIUjlDfs5IUIGXlfEXpYEMt3cnrbgpYmauVf6bMgzzcwG+o8tzqV8Tm7dTcROMooC8VGJbjboYkJgmDMgHHbixJMAr6B5ZHJeAF6OGhOqlLMbVfCprQ75Wxjh3miFcyYpWasJzVqdNYf91U2Vacj+lupqqzZapd5sDm5xnWAO2tupWODXDhxva7Pwdia6H9N8nG9fumC/J/3hZirlxNwglzHW6pBhqwS8uCld4q6HxdlHsiUk+tvq+ZuWyFELzryUI06LtopX1q+hFRaF+VIkd4LGeuGWsW2xLhxHgMuaj9Zm4IcRlGOOy/kMhWkdAJtIEK5VKn0qrp8GwdoD3vc6ej745ijSkk+V+T25Qr1Q20Mx5DlkVQhlzDCDmE/rozPZSHoD9c6wH8B
-%% Zoom out to 90% on web-browser and screenshot, convert to pdf
-%% :screenshot --selector .diagram --filename /tmp/txauthn_flow.png (in firefox console)
-\begin{figure}[h]
+\begin{figure}
   \centering
-  \includegraphics[width=12.5cm]{txauthn_flow_swimlanes}
-  \caption{The flow of events during WebAuthn transaction authentication, subdivided into three stages.}
-  \label{Fig:TxAuthnFlow}
+  \includegraphics[width=16cm]{txauthn_flow_setup_swimlanes}
+  \caption{The flow of events during the setup stage of WebAuthn transaction authentication.}
+  \label{Fig:TxAuthnFlowSetup}
 \end{figure}
+
 
 % TODO: Talk about server-side rendering preloading
 
-The setup for a transaction authenticate event originates from the frontend. Figure~\ref{TxAuthnFlow} illustrate the setup stage of a transaction authentication event. There are several designs to setup a WebAuthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the frontend waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the frontend preemptively initiates the setup, without knowing whether the user will even perform any secured operation on the web-page. 
+The setup for a transaction authenticate event originates from the frontend. Figure~\ref{Fig:TxAuthnFlowSetup} illustrate the setup stage of a transaction authentication event. There are several designs to setup a WebAuthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the frontend waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the frontend preemptively initiates the setup, without knowing whether the user will even perform any secured operation on the web-page. 
 
 In either case, the setup is a POST request to the firewall. The payload for the setup POST request is an authentication message that will eventually be displayed to the user on their hardware device. The message is constructed from user input and additional information contained in the HTML of the webpage, but in all three case studies of this thesis, that was always enough. In response to the POST request, the frontend receives a few parameters:
 
@@ -135,9 +152,16 @@ In either case, the setup is a POST request to the firewall. The payload for the
 
 \section{Cryptographic Attestation}\label{Sec:CryptographicAttestation}
 
+\begin{figure}
+  \centering
+  \includegraphics[width=16cm]{txauthn_flow_cryptoattest_swimlanes}
+  \caption{The flow of events during the cryptographic attestation stage of WebAuthn transaction authentication.}
+  \label{Fig:TxAuthnFlowCryptoAttest}
+\end{figure}
+
 The request options from the firewall go through the frontend and are passed on to the hardware authenticator device. The threat model assumes that only the firewall, backend and hardware authenticator are secure. At any point, the frontend or web-browser could modify these options, but any tampering will be detected later on and denied authorization. 
 
-Figure~\ref{Fig:TxAuthnFlow} outlines the role of the hardware authenticator. The hardware device parses the request options, extracts from the \lstinline{extensions} field the authentication message and presents that to the user. The authentication message is in the form of a confirmation for some requested operation and is answered either by ``yes'' or ``no''. If the user attests ``yes'', the hardware device cryptographically signs a data object, which is returned as an additional field within the HTTP request to the firewall for verification.
+Figure~\ref{Fig:TxAuthnFlowCryptoAttest} outlines the role of the hardware authenticator. The hardware device parses the request options, extracts from the \lstinline{extensions} field the authentication message and presents that to the user. The authentication message is in the form of a confirmation for some requested operation and is answered either by ``yes'' or ``no''. If the user attests ``yes'', the hardware device cryptographically signs a data object, which is returned as an additional field within the HTTP request to the firewall for verification.
 
 The response of the hardware authenticator includes a \lstinline{clientDataJSON} object containing the authentication message displayed to the user a well as the \lstinline{Challenge} from the setup stage. A cryptographic signature of the \lstinline{clientDataJSON} is also included. The signature is computed using Elliptic Curve Digital Signature Algorithm (ECDSA) paired with the SHA-256 hash function. There are other fields, as well, for plumbing to help the firewall know what parameters to use to validate this response.
 
@@ -167,9 +191,16 @@ The response of the hardware authenticator includes a \lstinline{clientDataJSON}
 
 \section{WebAuthn Firewall Verification}\label{Sec:WebauthnFirewallVerification}
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=16cm]{txauthn_flow_verification_swimlanes}
+  \caption{The flow of events during the verification stage of WebAuthn transaction authentication.}
+  \label{Fig:TxAuthnFlowVerification}
+\end{figure}
+
 The WebAuthn firewall receives an HTTP request on a protected route with all of its usual parameters plus the authentication data object. The firewall must verify the integrity of this object as well that it corresponds with the intent of the HTTP request. In other words, it must detect whether any code not in the trusted computing base, such as the frontend, tampered with the authentication data. Also, it must make sure that the operation the user attested to on their hardware device that resulted in this authentication data object is in fact the operation to be performed if the protected HTTP request were to be permitted through. 
 
-Figure~\ref{Fig:TxAuthnFlow} illustrates the main steps of the verification stage. The three main steps are verifying the challenge, the authentication message and the authentication data signature:
+Figure~\ref{Fig:TxAuthnFlowVerification} illustrates the main steps of the verification stage. The three main steps are verifying the challenge, the authentication message and the authentication data signature:
 
 \begin{enumerate}[nosep]
 
