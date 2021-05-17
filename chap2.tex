@@ -11,7 +11,7 @@ This chapter presents the background and related work that precedes this researc
 % TODO: Maybe explain what external observation and internal observation are
 \section{Hardware Authenticators for \newline Two-Factor Authentication}\label{Sec:HardwareAuthenticators_2FA}
 
-The state of the art for using hardware devices for website authentication is two-factor authentication. These devices such as the YubiKey \cite{yubico-products} resemble a small USB key which stores a private key on device. Websites that support two-factor authentication simply request the secondary mode of authentication during login. Two-factor authentication solves the security problems for login quite well \cite{questRemovePasswords}. Depending on the implementation of the specific hardware device, most provide strong resilience to targeted impersonation, physical observation, internal observation, leakage of data secrets, relying on a trusted third-party, etc. However, as explained previously, these benefits do not pertain beyond the login point of a website and assume a lenient threat model. The adversary could simply wait for the user to faithfully log in and then launch their planned attack. 
+The state of the art for using hardware devices for website authentication is two-factor authentication. These devices such as the YubiKey \cite{yubico-products} resemble a small USB key which stores a private key on device. Websites that support two-factor authentication simply request the secondary mode of authentication during login. Two-factor authentication solves the security problems for login quite well \cite{questRemovePasswords}. Depending on the implementation of the specific hardware device, most provide strong resilience to targeted impersonation, physical observation, internal observation, leakage of data secrets and relying on a trusted third-party. However, as explained previously, these benefits do not pertain beyond the login point of a website and assume a lenient threat model. The adversary with control over the web-browser could simply wait for the user to faithfully log in and then launch their planned attack. 
 
 %% 
 %% \iffalse
@@ -23,21 +23,38 @@ A number of specifications standardize two-factor authentication so that the sam
 
 \section{Current Uses of Transaction Authentication}\label{Sec:CurrentUses_txAuthn}
 
-Although transaction authentication by the WebAuthn standard is not yet commonly used, cryptocurrency hardware wallets almost universally support transaction authentication. The two most popular manufacturers, Ledger \cite{ledger} and Trezor \cite{trezor}, sell hardware wallets which hold the private keys and have displays. In order to send any cryptocurrency from the device, the device displays a message detailing the transaction, which the user would need to authorize on the physical device. Otherwise, the device will not sign the transaction which is required for it to proceed and be sent over the network.
+Although transaction authentication by the WebAuthn standard is not yet commonly used, cryptocurrency hardware wallets universally support transaction authentication. The two most popular manufacturers, Ledger \cite{ledger} and Trezor \cite{trezor}, sell hardware wallets which hold the private keys and have displays. In order to send any cryptocurrency from the device, the device displays a message detailing the transaction, which the user would need to authorize on the physical device. Otherwise, the device will not sign the transaction which is required for it to proceed and be sent over the network.
 
-In a similar but diminished vain, some banks such as Bank of America reuse two-factor authentication for sensitive or high-value monetary transactions \cite{BoA-2FA}. This is unlike transaction authentication in that the user does not see a confirmation of the exact transaction to take place before confirming. But the process of requesting supplemental two-factor authentication on sensitive transactions aims to defend against a similar threat model as transaction authentication.
+In a similar but diminished vain, some banks such as Bank of America reuse two-factor authentication for sensitive or high-value monetary transactions \cite{BoA-2FA}. In order to complete the sensitive transaction, the user must redo two-factor authentication like during login. This is unlike transaction authentication in that no hardware device specific to transaction authentication is involved, and the user does not see a confirmation of the exact transaction to take place before confirming. But the process of requesting supplemental two-factor authentication on sensitive transactions aims to defend against a similar threat model as transaction authentication.
 
 \section{Hardware Authenticators for \newline Transaction Authentication}
 
-Few hardware devices support generic transaction authentication. Hardware authenticators for two-factor authentication such as the YubiKey discussed in Section~\ref{Sec:HardwareAuthenticators_2FA} do not have any display. Therefore, they are unable to perform the core function of transaction authentication, displaying a message to the user and signing it upon their confirmation. The cryptocurrency hardware wallets discussed in Section~\ref{Sec:CurrentUses_txAuthn} provide transaction authentication, but only for a limited subset of functionality relating to crypto transactions.  
+Hardware authenticator devices normally do not support general-purpose transaction authentication. Hardware authenticators for two-factor authentication such as the YubiKey discussed in Section~\ref{Sec:HardwareAuthenticators_2FA} do not have any display. Therefore, they are unable to perform the core function of transaction authentication, displaying a message to the user and signing it upon their confirmation. The cryptocurrency hardware wallets discussed in Section~\ref{Sec:CurrentUses_txAuthn} provide transaction authentication, but only for a limited subset of functionality relating to crypto transactions.  
 
-The WebAuthn standard is supported by a few authenticators, but none are dedicated hardware devices required by the threat model. Also, these authenticators only support regular WebAuthn two-factor authentication, not the transaction authentication extension. Google has a Chrome extension that poses as a virtual hardware authenticator; it performs all of the signing in-browser \cite{virtual-authenticators-tab}. Krypton is a small company dedicated to making cryptographic authentication easy \cite{krypton}. They provide a browser plugin and phone app, which pair with one another. The plugin interfaces with the frontend and the phone performs the cryptographic signing. 
+%% 
+\iffalse
+, but none support the transaction authentication extension.
 
-This research modified the Krypton browser plugin to display the authentication message and await user consent before performing the signing also in-browser.
+are dedicated hardware devices required by the threat model. Also, these authenticators only support regular WebAuthn two-factor authentication, not the transaction authentication extension. 
+\fi
+%% 
+
+WebAuthn transaction authentication is not supported by any hardware authenticators. A few hardware authenticators and software emulated authenticators support WebAuthn, but only the regular two-factor authentication. The software emulated authenticators are intended for development and research purposes. Google has a Chrome extension that poses as a virtual hardware authenticator; it performs all of the signing in-browser \cite{virtual-authenticators-tab}. Krypton is a small company dedicated to making cryptographic authentication easy \cite{krypton}. They provide a browser plugin and phone app, which pair with one another. The plugin interfaces with the web-browser and the phone performs the cryptographic signing. 
+
+This research must modify one of the software emulated authenticators to support transaction authentication. It uses a modified Krypton browser plugin to display the authentication message and await user consent before performing the signing also in-browser. Figure~\ref{Fig:KryptonAuthenticator} portrays the user interface of the plugin as it awaits consent before returning a signed transaction authentication object. This design deviates from the original Krypton design since it eliminates the phone app from the signing process. The security properties of the authenticator device itself is not a focus for this research. It is assumed always secure, so for prototyping and experimentation, this software modified authenticator is sufficient.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=10cm]{krypton_txauthn}
+  \caption{User interface of Krypton authenticator used during research. It is awaiting user consent before authorizing the deletion of a repository ``damian/midnight-train''.}
+  \label{Fig:KryptonAuthenticator}
+\end{figure}
 
 %% 
 %% \iffalse
 %% For ease of development, this research modified the Krypton browser plugin to display the authentication message and await user consent before performing the signing in-browser. It completely
+
+%% Since the design of the hardware authenticator is not a focus for this research, it is simpler to avoid interfacing with the phone at all. 
 %% \fi
 %% 
 

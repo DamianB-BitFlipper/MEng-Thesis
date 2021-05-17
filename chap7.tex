@@ -5,9 +5,27 @@
 %% \files=
 %% prompt when you run the file main.tex through LaTeX.
 
-\chapter{Evaluations}\label{Chap:Evaluations}
+\chapter{Evaluation}\label{Chap:Evaluation}
 
-This chapter presents evaluation metrics from the three case studies of the WebAuthn firewall. They put in concrete terms all of the advantages of the WebAuthn firewall discussed throughout this thesis. The principal evaluation critera focus on simplicity, organization, ease-of-use and performance overhead of the firewall.
+This chapter presents evaluation metrics from the three case studies of the WebAuthn firewall. They put in concrete terms all of the advantages of the WebAuthn firewall discussed throughout this thesis. The principal evaluation criteria focus on simplicity, organization, ease-of-use and performance overhead of the firewall by answering the following questions:
+
+\begin{itemize}[nosep]
+\item What is the complexity of using the WebAuthn firewall?
+
+  \begin{itemize}[nosep]
+    \item What is the breakdown of the configuration file?
+    \item How much incremental work does it take to secure a new route?
+  \end{itemize}
+
+\item How much does a web service's frontend code need to be modified?
+
+\item How do the changes to a web service's backend compare when integrating WebAuthn with the firewall versus intrusively?
+
+\item What is the performance overhead of the WebAuthn firewall?
+
+\end{itemize}
+
+
 
 \section{WebAuthn Firewall Configuration Metrics}
 
@@ -89,9 +107,9 @@ Figure~\ref{Fig:IncrementalComplexity} plots the frequencies of lines of code ne
 %% \fi
 %% 
 
-\begin{figure}[h]
+\begin{figure}
   \centering
-  \includegraphics[width=14cm]{./plots/linesofcode}
+  \includegraphics[width=13.5cm]{./plots/linesofcode}
   \caption{The frequencies of lines of code to secure a route with transaction authentication. The majority of the routes can be secured in 10 lines or less.}
   \label{Fig:IncrementalComplexity}
 \end{figure}
@@ -114,7 +132,7 @@ This chart also evidently demonstrates that most of the routes may be secured us
 
 %% Simplicity and organization
 
-%%  are the main evaluation critera.
+%%  are the main evaluation criteria.
 %% the benefits of using the firewall to integrate webauthn into a web service. 
 %% \fi
 %% 
@@ -222,7 +240,7 @@ Three different scenarios are tested and the results reported in Figure~\ref{Fig
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=13cm]{./plots/runtimes}
+  \includegraphics[width=13.5cm]{./plots/runtimes}
   \caption{The run times of three different Gogs setups under load. The x-axis are the number of users issuing requests concurrently, and the y-axis is the run time latency in milliseconds. The three experiments are: using the firewall with WebAuthn enabled, using the firewall with WebAuthn disabled, issuing requests directly to the Gogs server without WebAuthn transaction authentication. There is a latency penalty to using the WebAuthn firewall.}
   \label{Fig:PerformanceOverhead}
 \end{figure}

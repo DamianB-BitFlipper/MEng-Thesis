@@ -113,7 +113,7 @@ Table~\ref{Table:CalypsoSecuredRoutes} lists the secured operations of Calypso w
 
  Update Profile Settings & \lstinline|"Save the profile settings: Espanol Public"| \\ \hline
 
- Invite New Users to Site & \lstinline|"Invite new user(s): damian, durian, John Smithson"| \\ \hline
+ Invite New Users to Site & \lstinline|"Invite new users: damian, durian, john-smithson"| \\ \hline
 
  Change Site Address & 
 %% TODO: Figure out how to remove numbering and frame
@@ -134,17 +134,19 @@ Table~\ref{Table:CalypsoSecuredRoutes} lists the secured operations of Calypso w
 Certain domain specific programs have multiple context retrievals. Others have multiple format tags to fill, and one program requires a special formatting function. Apart from the custom login handler, there is no case where a custom handler is necessary. 
 The ``Invite New Users to Site'' route receives HTTP request containing an array of elements that need to be comma separated in the authentication message. Rather than implementing a custom handler for this minor inconvenience, the \lstinline{Apply} domain specific operation described in Table~\ref{Table:DSL_GetterOperations} resolves this problem. It enables Go code to be used within a domain specific program to a limited extent. The following is a domain specific program for inviting new users to administer a WordPress blog.
 
-\iffalse
-all of the routes in Calypso are protected using the DSL. 
-\fi
+%% 
+%% \iffalse
+%% all of the routes in Calypso are protected using the DSL. 
+%% \fi
+%% 
 
 \begin{lstlisting}[float=h]
-firewall.Secure("POST", "/rest/{version}/sites/{site_id}/invites/new", 
-  firewall.Authn("Invite new user(s): %v",
-  wf.Apply(func(args ...interface{}) (interface{}, error) {
-    invitees := args[0].([]string)
-    return strings.Join(invitees, ","), nil
-  }, wf.GetArray("invitees")),
+Secure("POST", "/rest/{version}/sites/{site_id}/invites/new", 
+  Authn("Invite new user(s): %v",
+    wf.Apply(func(args ...interface{}) (interface{}, error) {
+      invitees := args[0].([]string)
+      return strings.Join(invitees, ","), nil
+    }, wf.GetArray("invitees")),
 ))
 \end{lstlisting}
 
@@ -164,7 +166,7 @@ Gogs is a server-side rendered self-hosted Git web service \cite{gogs}. A server
 
 The Gogs web service was the first of the three case-studies. Before the WebAuthn firewall became a mature idea, part of Gogs was secured in the traditional, intrusive fashion described in Section~\ref{Sec:StatusQuo}. This work is redone using the WebAuthn firewall approach once it proved itself as a prospective design approach.
 
-The two main challenges with integrating WebAuthn into Gogs intrusively are the database adapter and organizational difficulties. WebAuthn needs a database table to record entries of users' public key credentials. Simply creating a new table in Gogs requires writing a custom database adapter for that table and modifying the codebase in a number of separate locations. Furthermore, the handlers for various Gogs routes are spread throughout the code. Keeping track of which routes are WebAuthn secured becomes increasingly more difficult as more routes are protected.
+The two main challenges with integrating WebAuthn into Gogs intrusively are the database adapter and organizational difficulties. WebAuthn needs a database table to record entries of users' public key credentials. Simply creating a new table in Gogs requires writing a custom database model for the table as well as modifying the codebase in a number of separate locations. Furthermore, the handlers for various Gogs routes are spread throughout the code. Keeping track of which routes are WebAuthn secured becomes increasingly more difficult as more routes are protected.
 
 %% 
 %% \iffalse

@@ -34,7 +34,7 @@ WebAuthn transaction authentication is a protocol specification for authenticati
 %% 
 
 \begin{enumerate}[nosep]
-\item Registration: Makes a record of the user and their cryptographic credential into a database. Registration is only performed once per user, and the database record is used by the verification step later on.
+\item Registration: Makes a record of the user and their cryptographic credential into a database. Registration is only performed once per user and is assumed secure. The database record is used by the verification step later on.
 
 \item Setup: Initiated by the user's web-browser and involves a priming exchange between it and the WebAuthn verification end.
 
@@ -106,7 +106,7 @@ The registration process begins with a setup of its own, where the web-browser r
 
 % TODO: Talk about server-side rendering preloading
 
-The setup for a transaction authenticate event originates from the frontend. Figure~\ref{Fig:TxAuthnFlowSetup} illustrate the setup stage of a transaction authentication event. There are several designs to setup a WebAuthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the frontend waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the frontend preemptively initiates the setup, without knowing whether the user will even perform any secured operation on the web-page. 
+The setup for a transaction authentication event originates from the frontend. Figure~\ref{Fig:TxAuthnFlowSetup} illustrate the setup stage of a transaction authentication event. There are several designs to setup a WebAuthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the frontend waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the frontend preemptively initiates the setup, without knowing whether the user will even perform any secured operation on the web-page. 
 
 In either case, the setup is a POST request to the firewall. The payload for the setup POST request is an authentication message that will eventually be displayed to the user on their hardware device. The message is constructed from user input and additional information contained in the HTML of the webpage, but in all three case studies of this thesis, that was always enough. In response to the POST request, the frontend receives a few parameters:
 
@@ -198,7 +198,13 @@ The response of the hardware authenticator includes a \lstinline{clientDataJSON}
   \label{Fig:TxAuthnFlowVerification}
 \end{figure}
 
-The WebAuthn firewall receives an HTTP request on a protected route with all of its usual parameters plus the authentication data object. The firewall must verify the integrity of this object as well that it corresponds with the intent of the HTTP request. In other words, it must detect whether any code not in the trusted computing base, such as the frontend, tampered with the authentication data. Also, it must make sure that the operation the user attested to on their hardware device that resulted in this authentication data object is in fact the operation to be performed if the protected HTTP request were to be permitted through. 
+The WebAuthn firewall receives an HTTP request on a protected route with all of its usual parameters plus the authentication data object. The firewall must verify the integrity of this object as well that it corresponds with the intent of the HTTP request. In other words, it must detect whether any code not in the trusted computing base, such as the frontend, tampered with the authentication data. 
+
+%% 
+%% \iffalse
+%% Also, it must make sure that the operation the user attested to on their hardware device that resulted in this authentication data object is in fact the operation to be performed if the protected HTTP request were to be permitted through. 
+%% \fi
+%% 
 
 Figure~\ref{Fig:TxAuthnFlowVerification} illustrates the main steps of the verification stage. The three main steps are verifying the challenge, the authentication message and the authentication data signature:
 

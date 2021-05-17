@@ -30,12 +30,12 @@ To illustrate how an operation is secured, take the example of an HTTP request t
 \begin{lstlisting}[float=h] 
 route: "user/settings/ssh/delete",
 form-data: {
-  id: 2,
+  id: 6,
   assertion: "<assertion data from hardware authenticator>"
 }
 \end{lstlisting}
 
-This request should map to a human readable authentication message, in particular: \lstinline{"Delete SSH key named: Damian's SSH Key"}. Notice that the HTTP request contains the ID of the SSH key, but not the name itself. The name is not present anywhere in the request, but can be contextualized by the ID from the backend as described in Section~\ref{Sec:ContextRetrieval}. The domain specific language and default functions make this mapping and context retrieval easier. The following code snippet is roughly what manually securing this route in regular Go would look like:
+This request should map to a human readable authentication message, in particular: \lstinline{"Delete SSH key named: Damian's SSH Key"}. Notice that the HTTP request contains the ID of the SSH key, but not the name itself. The name is not present anywhere in the request, but can be contextualized by the ID from the backend as described in Section~\ref{Sec:ContextRetrieval}. The domain specific language and default functions make this mapping and context retrieval easier. The following code snippet is roughly what manually securing this route in Go would look like:
 
 \begin{lstlisting}[float=h] 
 func deleteSSHKey(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +60,15 @@ router.HandleFunc("/user/settings/ssh/delete",
                   deleteSSHKey).Methods("POST")
 \end{lstlisting}
 
-The domain specific language and default functions simplify this code. The HTTP route, \lstinline{"/user/settings/ssh/delete"}, and request type, \lstinline{"POST"}, are specified in one function call. A short domain specific program is also supplied to generate the authentication message. It begins with a format string \lstinline{"Delete SSH key named: %v"} where the format tag \lstinline{"%v"} gets substituted with the SSH key name. The following is the firewall code that secures the SSH key deletion for Gogs:
+%% 
+%% \iffalse
+%%  then performs an HTTP access to the backend's context route to retrieve a JSON object of the SSH key represented by \lstinline{"id"}. 
+%% \fi
+%% 
+
+First, the code reads the \lstinline{"id"} and \lstinline{"assertion"} values from the request form-data. It then contextualizes the \lstinline{"id"} to retrieve the name of the associated SSH key via the backend's context route. Finally, it creates an authentication message and verifies it against the \lstinline{"assertion"} data. This handler is attached to the HTTP route for SSH key deletion.
+
+The domain specific language and default functions simplify this code. The HTTP route for SSH key deletion, \lstinline{"/user/settings/ssh/delete"}, and request type, \lstinline{"POST"}, are specified in one function call. A short domain specific program specifies how to generate the authentication message. It begins with a format string \lstinline{"Delete SSH key named: %v"} where the format tag \lstinline{"%v"} gets substituted with the SSH key name. The following is the firewall code that secures the SSH key deletion for Gogs:
 
 %% 
 %% \iffalse
@@ -73,10 +81,10 @@ The domain specific language and default functions simplify this code. The HTTP 
 %% 
 
 \begin{lstlisting}[float=h]
-Secure("POST", "/user/settings/ssh/delete", Authn(
-  "Delete SSH key named: %v",
-  wf.SetContextVar("ssh_key", wf.Get("id")),
-  wf.GetVar("ssh_key").SubField("Name"),
+Secure("POST", "/user/settings/ssh/delete", 
+  Authn("Delete SSH key named: %v",
+    wf.SetContextVar("ssh_key", wf.Get("id")),
+    wf.GetVar("ssh_key").SubField("Name"),
 ))
 \end{lstlisting}
 
@@ -139,17 +147,29 @@ In three different case studies, the firewall is used to integrate WebAuthn tran
   \caption{The positioning and role of the WebAuthn firewall in a RESTful paradigm web service.}\label{Fig:ProxyingRequestsRESTful}
 \end{figure}
 
-For a RESTful web application, the placement of the firewall is more intuitive. As depicted in Figure~\ref{Fig:ProxyingRequestsRESTful}, the firewall sits between the frontend and backend of the web service. In a RESTful design, frontend and backend are separate programs running on their own IP addresses and ports. The user's web-browser interacts with the frontend through its IP address. Whenever the frontend needs to interact with the backend, it launches HTTP requests to the IP address of the backend. 
+%% 
+%% \iffalse
+%% and backend are separate programs running on their own IP addresses and ports. The user's web-browser interacts with the frontend through its IP address.
+%% \fi
+%% 
 
-However, since the WebAuthn firewall sits in between the two, it runs on its own IP address and port, and the frontend is reconfigured to use it as its backend destination address. So when the frontend needs to issue a backend request, it sends it to the firewall rather than to the backend. From there, the firewall performs its role and, as necessary, proxies onward to the actual backend. Responses from the backend are returned to the firewall which are automatically forwarded on to the frontend. 
+For a RESTful web application, the placement of the firewall is more intuitive. As depicted in Figure~\ref{Fig:ProxyingRequestsRESTful}, the firewall sits between the frontend and backend of the web service. In a RESTful design, the frontend runs in the web-browser and renders the webpage visible to the user. Whenever the frontend needs to interact with the backend, it launches HTTP requests to the IP address of the backend. However, since the WebAuthn firewall sits in between the two, it runs on its own IP address and port, and the frontend is reconfigured to use it as its backend destination address. So when the frontend needs to issue a backend request, it sends it to the firewall rather than to the backend. From there, the firewall performs its role and, as necessary, proxies onward to the actual backend. Responses from the backend are returned to the firewall which are automatically forwarded on to the frontend. 
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=11cm]{ServerSide_with_firewall_drawio}
+  \includegraphics[width=\textwidth]{ServerSide_with_firewall_drawio}
   \caption{The positioning and role of the WebAuthn firewall in a server-side rendering paradigm web service.}\label{Fig:ProxyingRequestsServerSide}
 \end{figure}
 
-In a server-side rendering web application, the firewall additionally performs the role of the frontend described in the RESTful use case. As shown in Figure~\ref{Fig:ProxyingRequestsServerSide}, the user's web-browser interacts with the IP address of the firewall directly. All HTTP requests originate from the user's web-browser and are directed to the frontend. In a server-side rendering web application, the webpage rendering code and backend use the same address. The firewall processes requests sent to it and relays them onward to the server-side rendering web-application if the verification code passes. In such a setup, the WebAuthn firewall is situated between the web-browser and backend.
+In a server-side rendering web application, there is no notion of a frontend rendering the webpage like in the RESTful use case. Rather, every webpage visible to the user is generated by the backend and sent to the web-browser. From the web-browser, the webpage interacts directly with the IP address of the backend. With the WebAuthn firewall in place as shown in Figure~\ref{Fig:ProxyingRequestsServerSide}, the endpoint of the webpage is configured to be the address of the firewall instead of the backend. This way, all HTTP requests that originate from the webpage are sent to the firewall. The firewall processes these requests and relays them onward to the server-side rendering web-application if the WebAuthn verification code passes. In such a setup, the WebAuthn firewall is situated between the web-browser's webpage and backend.
+
+%% 
+%% \iffalse
+%% and are directed to the firewall.
+
+%% the firewall additionally performs the role of the frontend described in the RESTful use case. As shown in Figure~\ref{Fig:ProxyingRequestsServerSide}, the user's web-browser interacts with the IP address of the firewall directly. All HTTP requests originate from the user's web-browser and are directed to the firewall. In a server-side rendering web application, the webpage rendering code and backend use the same address. The firewall processes requests sent to it and relays them onward to the server-side rendering web-application if the verification code passes. In such a setup, the WebAuthn firewall is situated between the web-browser and backend.
+%% \fi
+%% 
 
 %% 
 %% \iffalse
@@ -441,12 +461,24 @@ The first argument of the \lstinline{Authn} function is the authentication messa
 The following code snippet is an example of how the \lstinline{Authn} function is used to write a simple domain specific program. This code snippet transaction authenticates the route for a Gogs user leaving a Git repository as a collaborator. 
 
 \begin{lstlisting}[float=h]
-firewall.Secure("POST", "/user/settings/repositories/leave", 
-        firewall.Authn("Leave repository named: %v",
-                wf.SetContextVar("repo", wf.Get("id")),
-                wf.GetVar("repo").SubField("Name"),
+Secure("POST", "/user/settings/repositories/leave", 
+    Authn("Leave repository named: %v",
+      wf.SetContextVar("repo", wf.Get("id")),
+      wf.GetVar("repo").SubField("Name"),
 ))
 \end{lstlisting}
+
+A possible request sent to this route could be as follows:
+
+\begin{lstlisting}[float=h] 
+route: "/user/settings/repositories/leave",
+form-data: {
+  id: 9,
+  assertion: "<assertion data from hardware authenticator>"
+}
+\end{lstlisting}
+
+For example, assuming that there exists a repository with ID 9 named ``algo-price-watcher'', the authentication message generated to verify the \lstinline{"assertion"} data of the request would be \lstinline{"Leave repository named: algo-price-watcher"}.
 
 Domain specific language operations that affect the format string are listed in Table~\ref{Table:DSL_GetterOperations}. It is important to note that they only affect the authentication message format string if they are invoked at the top level within \lstinline{Authn}. If they are used as input arguments to other DSL operations, they simply return and pass on their value.
 
@@ -582,7 +614,24 @@ The WebAuthn firewall provides a domain specific language that usually can secur
 
 To support this, the \lstinline{Secure} function accepts as its third argument a handler function of a predefined type. The custom handler simply must adhere to that type. Common use cases for a custom handler is to perform some control flow decisions in the handler body or sometimes gather external context information to assemble the authentication message in a particular way. Either way, the custom handler usually culminates in calling \lstinline{Authn} at the end, since it handles all of the boilerplate code to validate the WebAuthn transaction.
 
-A custom handler is used in the Gogs web service. Gogs uses the same route for many different types of POST operations related to a repository's settings. Most of the actions that POST to this route are harmless, except the \lstinline{"delete"} action. A custom handler parses the HTTP request on that route and sees what the \lstinline{"action"} field in the request's payload is. Only if the action is \lstinline{"delete"} does the handler use \lstinline{Authn} to validate the request. Otherwise, the custom handler lets the request pass right through without any checks.
+A custom handler is used in the Gogs web service. Gogs uses the same route for many different types of POST operations related to a repository's settings. Most of the actions that POST to this route are harmless, except the \lstinline{"delete"} action. A following code snippet describes the core behavior of the custom handler.
+
+\begin{lstlisting}[float=h] 
+switch action {
+  case "delete":
+    // Handle deletion separately
+    handlerFn = firewall.Authn(
+      "Confirm repository delete: %s/%s",
+      wf.Get_URL("username"),
+      wf.Get_URL("reponame"),
+    )
+  default:
+    // Proxy all other requests
+    handlerFn = firewall.ProxyRequest
+}
+\end{lstlisting}
+
+The custom handler parses the HTTP request on that route and sees what the \lstinline{"action"} field in the request's payload is. Only if the action is \lstinline{"delete"} does the handler use \lstinline{Authn} to validate the request. Otherwise, the custom handler lets the request pass right through without any checks.
 
 %% 
 %% \iffalse
