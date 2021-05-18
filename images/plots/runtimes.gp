@@ -6,8 +6,11 @@ set key font ",11"
 set xlabel 'Number of Concurrent Users Issuing HTTP Requests'
 set xlabel font ",13"
 
-set ylabel 'Latency for HTTP Requests (ms)'
+set ylabel "Latency for HTTP Requests (ms)\n{/*0.9 95^{th} Percentile}"
 set ylabel font ",13"
+set ylabel offset -1,0,0
+
+set lmargin 12
 
 set title "Latency vs. User Load\n{/*0.8 Gogs Case Study Performance}"
 set title font ",16"

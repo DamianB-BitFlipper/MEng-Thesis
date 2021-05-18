@@ -110,17 +110,13 @@ A number of components are at play during transaction authentication. From the u
 
 So when the user tries to issue some high-risk operation, e.g., a monetary transfer, a confirmation message on their hardware authenticator will appear. The message is specific to the operation the user is trying to perform and should contain enough information for the user to validate that it is indeed correct and as intended. 
 
-For example, a bank website could require that monetary transfers exceeding \$500 must be transaction authenticated. In such a case, a possible authentication message that the user would have to confirm could resemble ``Send Alice \$750 from account \#12345''. The user would view on their hardware authenticator device the message as follows:
+For example, a bank website could require that monetary transfers exceeding \$500 must be transaction authenticated. In such a case, a possible authentication message that the user would have to confirm could resemble ``Send Alice \$750 from account \#12345''. The user would view the message on their hardware authenticator device as illustrated in Figure~\ref{Fig:HardwareAuthenticatorView}.
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=10cm]{authenticator_drawio}
   \caption{User interface of hardware authenticator.}
-
-  %% \centering
-  %% \defsvgwidth{\columnwidth}
-  %% \input{./images/authenticator_drawio.pdf_tex}
-  %% \caption{User interface of hardware authenticator.}
+  \label{Fig:HardwareAuthenticatorView}
 \end{figure}
 
 %% 
@@ -210,17 +206,18 @@ There are three major contributions of this thesis.
 
 \subsection{WebAuthn Firewall}
 
-Firstly, it must be emphasized that WebAuthn is simply a protocol specification. Implementation details are not bound to any one way, as long as they comply with the protocol's details. However, the code demos of WebAuthn unanimously integrate it into their codebases in the same intrusive manner. They import a WebAuthn library \cite{webauthn-library} directly into the codebase perform the necessary checks and validation in the backend.
+Firstly, it must be emphasized that WebAuthn is simply a protocol specification. Implementation details are not bound to any one way, as long as they comply with the protocol's details. However, the code demos of WebAuthn unanimously integrate it into their codebases in the same intrusive manner. They import a WebAuthn library \cite{webauthn-library} directly into the codebase and perform the necessary checks and validation in the backend.
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=12cm]{firewall_drawio}
   \caption{Basic depiction of WebAuthn firewall functionality.}
+  \label{Fig:BasicFirewallDepiction}
 \end{figure}
 
-This thesis proposed an alternative method for integrating WebAuthn, namely as a Web Application Firewall (WAF). This firewall monitors and filters HTTP traffic sent from the frontend to the backend. Any requests that the firewall deems as needing WebAuthn transaction authentication are stopped and processed by it. The firewall validates the WebAuthn transaction, complying with the protocol. And if all succeeds, it lets the request pass on through to the backend. As far as the backend is concerned, it is unaware that a firewall exists between it and the frontend. 
+This thesis proposed an alternative method for integrating WebAuthn, namely as a Web Application Firewall (WAF). This firewall monitors and filters HTTP traffic sent from the website webpage to the backend. Any requests that the firewall deems as needing WebAuthn transaction authentication are stopped and processed by it. The firewall validates the request according to the WebAuthn transaction authentication specification. Figure~\ref{Fig:BasicFirewallDepiction} depicts how if the validation succeeds, then the firewall lets the request pass on through to the backend. If not, then the request is blocked. As far as the backend is concerned, it is unaware that a firewall exists between it and the website webpage. 
 
-With the WebAuthn firewall approach, the backend has to be minimally, if at all, modified to support WebAuthn transaction authentication. Although the frontend still needs to be modified to produce the WebAuthn transaction authentication requests as it is the origin of all of the user's operations, the firewall approach lends itself better to integrating WebAuthn into a new or existing web service. It is less intrusive than the traditional library-based method and consolidates all of the WebAuthn related code in one place. As a result, it is less error-prone and easier to configure. 
+With the WebAuthn firewall approach, the backend has to be minimally, if at all, modified to support WebAuthn transaction authentication. Although the website still needs to be modified to produce the WebAuthn transaction authentication requests as it is the origin of all of the user's operations, the firewall approach lends itself better to integrating WebAuthn into a new or existing web service. It is less intrusive than the traditional library-based method and consolidates all of the WebAuthn related code in one place. As a result, it is less error-prone and easier to configure. 
 
 %% 
 %% \iffalse
@@ -271,7 +268,7 @@ The WebAuthn firewall presented in this thesis goes beyond simply providing a de
 
 Three separate case studies demonstrate how the WebAuthn firewall secures different architectures of web applications with WebAuthn transaction authentication. The web applications studied cover the RESTful design paradigm and the more traditional server-side rendering paradigm. The two RESTful applications studied are Conduit \cite{conduit}, a simple blog website, and Calypso \cite{calypso}, a frontend admin panel for WordPress. As illustrated in Figure~\ref{Fig:CaseStudiesRESTful}, the RESTful paradigm is where the frontend runs in the web-browser separately from the web-server backend program. The frontend performs the rendering visible to the user, and whenever it needs to fetch information or has to perform some server operation, it communicates via a pre-established API to the web-server, which executes those requests. 
 
-The server-side rendering application studied is Gogs \cite{gogs}, a self-hosted Git service much like GitHub \cite{github}. Figure~\ref{Fig:CaseStudiesServerSide} depicts the server-side rendering paradigm, where every operation the user performs on the webpage gets sent over to the server as a form POST request. In return, the server responds with a whole new webpage, complete with all of the HTML and JavaScript code to be displayed directly on the user's web-browser.
+The server-side rendering application studied is Gogs \cite{gogs}, a self-hosted Git service much like GitHub \cite{github}. Figure~\ref{Fig:CaseStudiesServerSide} depicts the server-side rendering paradigm, where every operation the user performs on the webpage gets sent over to the server as a HTTP request. In response, the server returns a whole new webpage, complete with all of the HTML and JavaScript code to be displayed on the user's web-browser.
 
 %% 
 %% \iffalse

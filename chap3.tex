@@ -74,7 +74,7 @@ The rest of this chapter describes these steps in more detail and uses the WebAu
   \label{Fig:WebauthnRegistrationFlow}
 \end{figure}
 
-Figure~\ref{Fig:WebauthnRegistrationFlow} illustrates the flow of events during the registration event. The purpose is for the user's hardware device to transfer its public key credential to the firewall. This process is assumed to be secure in the threat model, with no adversary to intercept or tamper with any of the communication. Therefore, whatever credential the firewall receives during registration is assumed to be genuine and the user's. The firewall later on uses this credential during the verification stage to ensure transaction authentication integrity. 
+The purpose of registration is for the user's hardware device to transfer its public key credential to the firewall. This process is assumed to be secure in the threat model, with no adversary able to intercept or tamper with any of the communications. Therefore, whatever credential the firewall receives during registration is assumed to be genuine and the user's. The firewall later on uses this credential during the verification stage to ensure transaction authentication integrity. 
 
 %% 
 %% \iffalse
@@ -92,7 +92,7 @@ Figure~\ref{Fig:WebauthnRegistrationFlow} illustrates the flow of events during 
 %% \fi
 %% 
 
-The registration process begins with a setup of its own, where the web-browser requests a few parameters from the firewall, most notably a random challenge nonce. The firewall remembers the challenge it sent as a part of the session data associated with the registration setup request. The challenge nonce prevents replay attacks. There are a few other parameters, but they are mainly for the hardware device to know what type of credential the firewall is expecting to receive. The hardware device sends over its public key credential for the firewall to save, with the challenge signed by that credential. The firewall receives an HTTP POST request containing this public key credential. The POST request also contains identifying information of the current user. The firewall verifies that the challenge is matches, and upon success, stores the credential and associated user ID into a database row.
+Figure~\ref{Fig:WebauthnRegistrationFlow} illustrates the flow of events during the registration event. The registration process begins with a setup of its own, where the web-browser requests a few parameters from the firewall, most notably a random challenge nonce. The firewall remembers the challenge it sent as a part of the session data associated with the registration setup request. The challenge nonce prevents replay attacks. There are a few other parameters, but they are mainly for the hardware device to know what type of credential the firewall is expecting to receive. The hardware device sends over its public key credential for the firewall to save, with the challenge signed by that credential. The firewall receives an HTTP POST request containing this public key credential. The POST request also contains identifying information of the current user. The firewall verifies that the challenge is matches, and upon success, stores the credential and associated user ID into a database row.
 
 \section{Transaction Authentication Setup}\label{Sec:TransactionAuthenticationSetup}
 
@@ -106,9 +106,9 @@ The registration process begins with a setup of its own, where the web-browser r
 
 % TODO: Talk about server-side rendering preloading
 
-The setup for a transaction authentication event originates from the frontend. Figure~\ref{Fig:TxAuthnFlowSetup} illustrate the setup stage of a transaction authentication event. There are several designs to setup a WebAuthn transaction event, but the setup content itself is all the same. More commonly, setup may occur lazily where the frontend waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the frontend preemptively initiates the setup, without knowing whether the user will even perform any secured operation on the web-page. 
+The setup for a transaction authentication event originates from the frontend webpage on the web-browser. There are several ways to setup a WebAuthn transaction event, but the contents being exchanged are all the same. More commonly, setup occurs lazily where the frontend waits for the user to initiate an operation protected by transaction authentication before initiating the setup. Or it may occur eagerly where the frontend preemptively initiates the setup, without knowing whether the user will even perform any secured operation on the web-page. 
 
-In either case, the setup is a POST request to the firewall. The payload for the setup POST request is an authentication message that will eventually be displayed to the user on their hardware device. The message is constructed from user input and additional information contained in the HTML of the webpage, but in all three case studies of this thesis, that was always enough. In response to the POST request, the frontend receives a few parameters:
+Figure~\ref{Fig:TxAuthnFlowSetup} illustrate the setup stage of a transaction authentication event. The setup begins with a POST request to the firewall. The payload for the setup POST request is an authentication message that will eventually be displayed to the user on their hardware device. The message is constructed from user input and additional information contained in the HTML of the webpage, but in all three case studies of this thesis, that was always enough. In response to the POST request, the frontend receives a few parameters:
 
 %% 
 %% \iffalse
