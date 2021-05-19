@@ -16,18 +16,18 @@
 This chapter presents evaluation metrics for the three case studies of \sys{}. The principal evaluation criteria focus on simplicity, organization, ease-of-use and performance overhead of \sys{} by answering the following questions:
 
 \begin{itemize}[nosep]
-\item What is the complexity of using \sys{}?
+\item What is the complexity of using \sys{}? (Section~\ref{Sec:FirewallConfigOverallComplexity})
 
   \begin{itemize}[nosep]
-    \item What is the breakdown of the configuration file?
-    \item How much incremental work does it take to secure a new route?
+    \item What is the breakdown of the configuration file? (Table~\ref{Table:EvaluationOverallComplexity})
+    \item How much incremental work does it take to secure a new route? (Figure~\ref{Fig:IncrementalComplexity})
   \end{itemize}
 
-\item How much does a web service's frontend code need to be modified?
+\item How much does a web service's frontend code need to be modified? (Section~\ref{Sec:FrontendModifications})
 
-\item How do the changes to a web service's backend compare when integrating WebAuthn with \sys{} versus intrusively?
+\item How do the changes to a web service's backend compare when integrating WebAuthn with \sys{} versus intrusively? (Section~\ref{Sec:BackendModifications})
 
-\item What is the performance overhead of \sys{}?
+\item What is the performance overhead of \sys{}? (Section~\ref{Sec:PerformanceOverhead})
 
 \end{itemize}
 
@@ -37,9 +37,15 @@ This chapter presents evaluation metrics for the three case studies of \sys{}. T
 
 Each of the three case studies has its associated WebAuthn firewall configuration file. The number of lines of code of this file is a proxy measurement to evaluate the complexity and ease-of-use of \sys{}. 
 
-\subsection{Overall Complexity}
+\subsection{Overall Complexity}\label{Sec:FirewallConfigOverallComplexity}
 
-The total configuration file size evaluates the overall complexity of configuring \sys{}. Table~\ref{Table:EvaluationOverallComplexity} lists the contents of a configuration file, sub-divided into four categories:
+%% 
+%% \iffalse
+%% lists the contents of a configuration file
+%% \fi
+%% 
+
+The total configuration file size evaluates the overall complexity of configuring \sys{} and is shown in Table~\ref{Table:EvaluationOverallComplexity}, sub-divided into four categories:
 
 \begin{itemize}[nosep]
 
@@ -53,8 +59,12 @@ The total configuration file size evaluates the overall complexity of configurin
 
 \end{itemize}
 
-The file sizes and the respective four-way breakdown illustrate the overall and itemized complexity of using \sys{}.
- 
+%% 
+%% \iffalse
+%% The file sizes and the respective four-way breakdown illustrate the overall and itemized complexity of using \sys{}.
+%% \fi
+%% 
+
 \begin{table}[h]
 \centering
 
@@ -103,9 +113,13 @@ The firewall configuration file is the sole source of customization that dictate
 
 \subsection{Incremental Complexity to Secure a Route}
 
-The configuration parameters, context retrieval and miscellaneous code are more or less fixed costs to the configuration file's complexity. Only the route handlers scales with the size of the service being secured. Conduit being the smallest and simplest web service has the smallest route handler cost. Gogs, on the opposite end of the spectrum, naturally has the largest cost. Since most routes may be secured using the domain specific language, the increase in route handler complexity increases slowly.
+%% 
+%% \iffalse
+%% Conduit being the smallest and simplest web service has the smallest route handler cost. Gogs, on the opposite end of the spectrum, naturally has the largest cost. Since most routes may be secured using the domain specific language, the increase in route handler complexity increases slowly.
+%% \fi
+%% 
 
-Figure~\ref{Fig:IncrementalComplexity} plots the frequencies of lines of code needed to secure a new route among all three case studies. The bar chart can be partitioned into two clear clusters at approximately the 20 lines of code per route handler boundary. The bars on the left side with fewer than 20 lines correspond to uses of the domain specific language. The handlers greater than 20 lines of code are solely the custom handlers. It is natural to expect this divide since the custom handlers by nature perform more involved processing of a request than the DSL handlers and thus use more lines of code.
+The configuration parameters, context retrieval and miscellaneous code are more or less fixed costs to the configuration file's complexity. Only the route handlers scales with the size of the service being secured. Figure~\ref{Fig:IncrementalComplexity} plots the frequencies of lines of code needed to secure a new route among all three case studies. The bar chart can be partitioned into two clear clusters at approximately the 20 lines of code per route handler boundary. The bars on the left side with fewer than 20 lines correspond to uses of the domain specific language. The handlers greater than 20 lines of code are solely the custom handlers. It is natural to expect this divide since the custom handlers by nature perform more involved processing of a request than the DSL handlers and thus use more lines of code.
 
 %% 
 %% \iffalse
@@ -143,7 +157,7 @@ This chart also evidently demonstrates that most of the routes may be secured us
 %% \fi
 %% 
 
-\section{Frontend Modifications}
+\section{Frontend Modifications}\label{Sec:FrontendModifications}
 
 The frontend of a web service must be modified slightly when integrating WebAuthn, regardless of whether the WebAuthn firewall is in use or not. The frontend issuing the WebAuthn operation must adhere to the protocol specification life cycle as described in Chapter~\ref{Chap:WebauthnTransactionAuthentication}. Table~\ref{Table:EvaluationsFrontendModifications} lists the total number of code changes for each frontend of the case studies. For every case, the number of changes all exceed the sizes of the WebAuthn firewall configuration files.
 
@@ -166,8 +180,14 @@ The frontend of a web service must be modified slightly when integrating WebAuth
 \label{Table:EvaluationsFrontendModifications}
 \end{table}
 
+%% 
+%% \iffalse
+%% , but rather simple and monotonous
+%% \fi
+%% 
+
 %% TODO: Not only gogs, but the overall average?
-These code changes are not complex, but rather simple and monotonous. There is boilerplate code delegated to a JavaScript library. Its contents are not included in the lines of code measurements, but its import and usage within the frontend is. The nature of protecting an operation with WebAuthn on the frontend involves making a few library calls, error handling and piecing together the authentication message from the HTML data present. For example, each Gogs operation secured by WebAuthn involves on average 54 lines of code changes to the frontend. 
+These code changes are not complex. There is boilerplate code delegated to a JavaScript library. Its contents are not included in the lines of code measurements, but its import and usage within the frontend is. The nature of protecting an operation with WebAuthn on the frontend involves making a few library calls, error handling and piecing together the authentication message from the HTML data present. For example, each Gogs operation secured by WebAuthn involves on average 54 lines of code changes to the frontend. 
 
 %% 
 %% \iffalse
@@ -180,7 +200,7 @@ These code changes are not complex, but rather simple and monotonous. There is b
 
 \section{Backend Modifications}\label{Sec:BackendModifications}
 
-A significant advantage to using \sys{} over integrating WebAuthn intrusively into a web service is the lack of modifications needed to the backend. Table~\ref{Table:EvaluationsBackendModifications} demonstrates this fact --- using \sys{} is minimally invasive to the backend.
+A significant advantage to using \sys{} over integrating WebAuthn intrusively into a web service is the lack of modifications needed to the backend. Table~\ref{Table:EvaluationsBackendModifications} demonstrates this fact --- using \sys{} is not invasive to the backend.
 
 \begin{table}[h]
 \centering
@@ -223,9 +243,9 @@ Before \sys{} became a mature idea, Gogs was partly WebAuthn secured intrusively
 \label{Table:EvaluationsComplexityDiffIntrusiveFirewall}
 \end{table}
 
-Many of the additional lines of code for the intrusive WebAuthn integration of Gogs come from all of the plumbing code needed in to support and run WebAuthn. WebAuthn needs its own database table with entries to record registered users. The backend must support WebAuthn registration and login. It must also include the WebAuthn code that verifies transaction authentication events. All of these functionalities come with \sys{} for free, which explains the dramatic reduction in backend complexity when using \sys{}.
+Many of the additional lines of code for the intrusive WebAuthn integration of Gogs come from all of the plumbing code needed in to support and run WebAuthn. WebAuthn needs its own database table with entries to record registered users. The backend must support WebAuthn registration and login. It must also include the WebAuthn code that verifies transaction authentication events. All of these functionalities come with \sys{} for free, which explains the large reduction in backend complexity when using \sys{}.
 
-\sys{} also dramatically reduces the amount of boilerplate code required to secure a new route. Gogs secured intrusively takes on average 87 lines of code per new route. The firewall has on average 11 lines per new route.
+\sys{} also reduces the amount of boilerplate code required to secure a new route. Gogs secured intrusively takes on average 87 lines of code per new route. The firewall has on average 11 lines per new route.
 
 %% 
 %% \iffalse
@@ -235,7 +255,7 @@ Many of the additional lines of code for the intrusive WebAuthn integration of G
 %% \fi
 %% 
 
-\section{Performance Overhead}
+\section{Performance Overhead}\label{Sec:PerformanceOverhead}
 
 \sys{} acts as a gatekeeper between the frontend and backend. It naturally adds some performance overhead to the whole system. This evaluation experiment measures the performance overhead under load to see how well it scales. 
 
