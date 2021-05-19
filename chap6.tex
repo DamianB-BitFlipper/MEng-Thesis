@@ -11,7 +11,7 @@ This chapter presents three case studies used to evaluate \sys{}. Each case stud
 
 \section{Conduit}
 
-Conduit is a simple RESTful blog web service \cite{conduit}. It is not a production service, rather an educational service to demonstrate the flexibility of RESTful web-applications. The project supplies many simple frontend and backend implementations, written in various programming languages and frameworks, but following the same API. The case study focused on a React based frontend \cite{conduit-frontend} and a Golang based backend \cite{conduit-backend}. Conduit is the best-case application for the WebAuthn firewall, a RESTful web service with basic functionality to protect. No backend modifications are necessary to integrate WebAuthn.
+Conduit is a simple RESTful blog web service \cite{conduit}. It is not a production service, rather an educational service to demonstrate the flexibility of RESTful web applications. The project supplies many simple frontend and backend implementations, written in various programming languages and frameworks, but following the same API. The case study focused on a React based frontend \cite{conduit-frontend} and a Golang based backend \cite{conduit-backend}. Conduit is the best-case application for the WebAuthn firewall, a RESTful web service with basic functionality to protect. No backend modifications are necessary to integrate WebAuthn.
 
 %% 
 %% \iffalse
@@ -24,7 +24,7 @@ Conduit is a simple RESTful blog web service \cite{conduit}. It is not a product
 
 \subsection{Context Retrieval}\label{Sec:Conduit_ContextRetrieval}
 
-A major benefit of a RESTful web-application is that the backend exposes many useful context routes. By design, a RESTful frontend performs the necessary rendering on the user's web-browser and must retrieve user specific information from the backend. These routes are useful for WebAuthn context retrieval as well. For example, the backend already implements routes such as getting an article by its ID. And if not, then there certainly will be a tangential route such as requesting all comments of an article to search for a specific one by ID. Since most of the modifications necessary to the backend when integrating the WebAuthn firewall are for context routes, this aspect of RESTful applications make that easy.
+A major benefit of a RESTful web application is that the backend exposes many useful context routes. By design, a RESTful frontend performs the necessary rendering on the user's web-browser and must retrieve user specific information from the backend. These routes are useful for WebAuthn context retrieval as well. For example, the backend already implements routes such as getting an article by its ID. And if not, then there certainly will be a tangential route such as requesting all comments of an article to search for a specific one by ID. Since most of the modifications necessary to the backend when integrating the WebAuthn firewall are for context routes, this aspect of RESTful applications make that easy.
 
 \subsection{Secured Routes}
 
@@ -160,7 +160,7 @@ The \lstinline{Authn} operation string formats the argument of \lstinline{wf.Get
 
 \section{Gogs}
 
-Gogs is a server-side rendered self-hosted Git web service \cite{gogs}. A server-side rendered web-application presents its own set of challenges to the WebAuthn firewall. Section~\ref{Sec:ProxyingRequests} explains how \sys{} has to be the end-point interacting with the user's web-browser. The firewall must obtain the context from the Gogs backend. The backend does not, however, conveniently expose context routes like RESTful backends as discussed in Section~\ref{Sec:Conduit_ContextRetrieval}.
+Gogs is a server-side rendered self-hosted Git web service \cite{gogs}. A server-side rendered web application presents its own set of challenges to the WebAuthn firewall. Section~\ref{Sec:ProxyingRequests} explains how \sys{} has to be the end-point interacting with the user's web-browser. The firewall must obtain the context from the Gogs backend. The backend does not, however, conveniently expose context routes like RESTful backends as discussed in Section~\ref{Sec:Conduit_ContextRetrieval}.
 
 %% 
 %% \iffalse
