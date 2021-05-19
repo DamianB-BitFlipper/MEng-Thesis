@@ -5,7 +5,7 @@
 main: main.pdf
 
 main.pdf: FORCE
-	latexmk -pdflatex='lualatex -interaction nonstopmode' -pdf main.tex
+	latexmk -pdflatex='lualatex -interaction nonstopmode' -pdf main.tex -f
 
 clean:
 	latexmk -pdf -C

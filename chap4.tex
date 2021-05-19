@@ -109,7 +109,7 @@ As demonstrated above, the traditional method of directly integrating WebAuthn i
   \label{Fig:ConfigurableComponents}
 \end{figure}
 
-Two sources of configuration enable the \sys{}'s customizable nature. One source is the central configuration element depicted as the leftmost input block in Figure~\ref{Fig:ConfigurableComponents}. It contains the general configurable parameters, from which a number of core WebAuthn routes are deduced and provided automatically.
+Two sources of configuration enable the \sys{}'s customizable nature. One source is the central configuration element depicted as the leftmost input block in Figure~\ref{Fig:ConfigurableComponents}. It contains the general configurable parameters, from which a number of core WebAuthn routes are deduced and secured transparently.
 
 The other two input blocks of Figure~\ref{Fig:ConfigurableComponents} handle the rest of the application specific routes to be secured. They are secured either using the domain specific language or custom Go code. These configurable options can be easily modified to completely define how \sys{} protects a web service. 
 
