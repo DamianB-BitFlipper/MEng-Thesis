@@ -6,7 +6,7 @@
 %% prompt when you run the file main.tex through LaTeX.
 \chapter{Introduction}
 
-This thesis contributes \sys{}, an application-level firewall to add transaction authentication to an existing web application. This chapter describes two core concepts of the threat model and transaction authentication, which are essential to understand before introducing \sys{} and the problems it solves. This chapter paints a broad picture of the overall thesis. The sections here serve as a preludes for the chapters that follow in the thesis body.
+This thesis presents \sys{}, an application-level firewall to add transaction authentication to an existing web application. This chapter describes two core concepts of the threat model and transaction authentication, which are essential to understand before introducing \sys{} and the problems it solves. This chapter paints a broad picture of the overall thesis. The sections here serve as a preludes for the chapters that follow in the thesis body.
 
 
 %% 
@@ -71,7 +71,7 @@ The World-Wide-Web Consortium (W3C) proposed a specification called \textit{WebA
 %% \fi
 %% 
 
-WebAuthn transaction authentication protects against a stricter threat model than traditional two-factor authentication. In transaction authentication, the threat model assumes that all components except the web service code and hardware authenticator device are vulnerable. This broad capability gives an adversary the ability to create or modify any HTTP requests between the user and web service. Save from defending against denial-of-service, transaction authentication prevents broad unauthorized access to a user's account by the adversary. There is an exception to the threat model: the entire registration event, where cryptographic public key information is sent from the user to the web service, must be assumed secure in order to provide its prescribed security guarantees.
+WebAuthn transaction authentication protects against a more stringent threat model than traditional two-factor authentication. In transaction authentication, the threat model assumes that all components except the web service code and hardware authenticator device are vulnerable. This broad capability gives an adversary the ability to create or modify any HTTP requests between the user and web service. Save from defending against denial-of-service, transaction authentication prevents broad unauthorized access to a user's account by the adversary. There is an exception to the threat model: the entire registration event, where cryptographic public key information is sent from the user to the web service, must be assumed secure in order to provide its prescribed security guarantees.
 
 %% 
 %% \iffalse

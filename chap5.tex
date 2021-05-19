@@ -165,7 +165,7 @@ As discussed in~\ref{Sec:DefaultHandlers}, every web application with WebAuthn t
 
  \lstinline|finishRegister|, \lstinline|finishLogin| & Validates WebAuthn public key credentials. If successful, \lstinline|finishRegister| saves the credentials in the firewall's database, whereas \lstinline|finishLogin| allows the login to continue. \\ \hline
 
- \lstinline|disableWebauthn| & Validates WebAuthn public key credential and authentication message \lstinline|"Confirm disable WebAuthn for {{ username }}"|. If successful, deletes the credential from the firewall's database. \\ \hline
+ \lstinline|disableWebauthn| & Validates WebAuthn public key credential and authentication message \lstinline|"Confirm disable WebAuthn for {{ username }}"|. If successful, it deletes the credential from the firewall's database. \\ \hline
 
 \end{tabular}
 \caption{The default handlers included with the WebAuthn firewall.}
