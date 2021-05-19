@@ -44,7 +44,15 @@ Three case studies with evaluations justify the advantages of this system over i
 
 \end{itemize}
 
-The firewall does incur a performance penalty, which varies depending on the implementation details of the web service. The session ID implementation of Gogs requires that \sys{} make an HTTP request in order to identify the current user issuing a request. Under heavy concurrent load, the latency penalty of the additional HTTP request is as high as 70 milliseconds.
+The firewall does incur a performance penalty, which varies depending on the implementation details of the web service. The session ID implementation of Gogs requires that \sys{} make an HTTP request in order to identify the current user issuing a request. This identification procedure slows down the entire latency of the request being authenticated. Under heavy load, the request latency may be up to 1.5x slower when using the firewall than accessing the web service directly without \sys{}.
+
+%% 
+%% \iffalse
+%% Under heavy concurrent load, the latency penalty of the additional HTTP request is as high as 70 milliseconds.
+
+%% Under heavy load, the latency penalty of the additional HTTP request is up to 1.5x slower than accessing the original web service directly without WebAuthn.
+%% \fi
+%% 
 
 In conclusion, the WebAuthn firewall architecture is flexible and extensible. With relatively little effort, it can equip even a production level web service with WebAuthn transaction authentication. When well tuned for performance, such a WebAuthn firewall architecture design is an appealing option for greater web security.
 

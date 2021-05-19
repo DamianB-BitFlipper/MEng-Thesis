@@ -220,7 +220,7 @@ The first argument of the \lstinline{Authn} function is the format string. The s
 %% \fi
 %% 
 
-Each DSL operation must implement an \lstinline{execute} and \lstinline{retrieve} function. The \lstinline{Authn} executes the domain specific program line-by-line by calling \lstinline{execute} of the top-level operations in order. Since \lstinline{execute} is only called on top-level operations, which may affect the authentication message, it has access to both the \listings{scope} and the output \lstinline{formatVars} array. The function type of \lstinline{execute} is produced in Code Snippet~\ref{code:executeFunctionType}.
+Each DSL operation must implement an \lstinline{execute} and \lstinline{retrieve} function. The \lstinline{Authn} executes the domain specific program line-by-line by calling \lstinline{execute} of the top-level operations in order. Since \lstinline{execute} is only called on top-level operations, which may affect the authentication message, it has access to both the \lstinline{scope} and the output \lstinline{formatVars} array. The function type of \lstinline{execute} is produced in Code Snippet~\ref{code:executeFunctionType}.
 
 %% 
 %% \iffalse
