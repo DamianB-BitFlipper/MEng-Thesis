@@ -16,7 +16,7 @@
 
 \chapter{WebAuthn Firewall Implementation}\label{Chap:WebauthnFirewallImplementation}
 
-The WebAuthn firewall studied is implemented in the Go programming language. This chapter describes how some of the critical components of the firewall's design detailed in Chapter~\ref{Chap:WebauthnFirewallDesign} are implemented. The following Table~\ref{Table:ImplementationFootprint} outlines the approximate footprint of each component discussed in this chapter.
+The WebAuthn firewall presented in this thesis is implemented in the Go programming language. This chapter describes how some of the critical components of \sys{}'s design described in Chapter~\ref{Chap:WebauthnFirewallDesign} are implemented. The following Table~\ref{Table:ImplementationFootprint} outlines the approximate footprint of each component discussed in this chapter.
 
 \begin{table}[h]
 \centering
@@ -143,7 +143,7 @@ The cryptographic verification of a WebAuthn transaction authentication event us
 
 \section{Default Handlers}
 
-As discussed in~\ref{Sec:DefaultHandlers}, every web-application with WebAuthn transaction authentication must support a list of core WebAuthn operations. The firewall secures them automatically with a collection of default handlers. They can be grouped in Table~\ref{Table:Implementation_DefaultHandlers} by their similar implementations.
+As discussed in~\ref{Sec:DefaultHandlers}, every web-application with WebAuthn transaction authentication must support a list of core WebAuthn operations. \sys{} secures them transparently with a collection of default handlers. They can be grouped in Table~\ref{Table:Implementation_DefaultHandlers} by their similar implementations.
 
 %% 
 %% \iffalse
@@ -198,7 +198,7 @@ As discussed in~\ref{Sec:DefaultHandlers}, every web-application with WebAuthn t
 
 \section{Domain Specific Language}
 
-The firewall secures most routes using the domain specific language within the \lstinline{Authn} function described in Section~\ref{Sec:DomainSpecificLanguage}. Any domain specific program has a state and an output container. A \lstinline{scope} hash table holds the state of the program --- all of the local variables which may be set and accessed. The has table maps strings representing variable names to their respective contained values. The output container is a \lstinline{formatVars} array. This array stores the values to apply sequentially to the format tags included in the first argument of \lstinline{Authn}.
+\sys{} secures most routes using the domain specific language within the \lstinline{Authn} function described in Section~\ref{Sec:DomainSpecificLanguage}. Any domain specific program has a state and an output container. A \lstinline{scope} hash table holds the state of the program --- all of the local variables which may be set and accessed. The has table maps strings representing variable names to their respective contained values. The output container is a \lstinline{formatVars} array. This array stores the values to apply sequentially to the format tags included in the first argument of \lstinline{Authn}.
 
 %% 
 %% \iffalse
@@ -220,17 +220,19 @@ The first argument of the \lstinline{Authn} function is the format string. The s
 %% \fi
 %% 
 
-Each DSL operation must implement an \lstinline{execute} and \lstinline{retrieve} function. The \lstinline{Authn} executes the domain specific program line-by-line by calling \lstinline{execute} of the top-level operations in order. Since \lstinline{execute} is only called on top-level operations, which may affect the authentication message, it has access to both the \listings{scope} and the output \lstinline{formatVars} array. The function type of \lstinline{execute} is as follows:
+Each DSL operation must implement an \lstinline{execute} and \lstinline{retrieve} function. The \lstinline{Authn} executes the domain specific program line-by-line by calling \lstinline{execute} of the top-level operations in order. Since \lstinline{execute} is only called on top-level operations, which may affect the authentication message, it has access to both the \listings{scope} and the output \lstinline{formatVars} array. The function type of \lstinline{execute} is produced in Code Snippet~\ref{code:executeFunctionType}.
 
 %% 
 %% \iffalse
+%%  lists the function type of \lstinline{execute} is as follows:
+
 %% The \lstinline{execute} function of a DSL operation only gets called whenever that operation is at the top-level. As a result, the operation has access to the \lstinline{formatVars} array. The type is as follows:
 
 %% Since the top-level operations may affect the authentication message, they have access to the \lstinline{formatVars} array. 
 %% \fi
 %% 
 
-\begin{lstlisting}[float=h]
+\begin{lstlisting}[float=h,label=code:executeFunctionType,caption=The function type of the \lstinline{execute} function.]
 execute(r *ExtendedRequest, 
         scope scopeContainer, 
         formatVars *[]interface{})
@@ -262,9 +264,9 @@ Take the following example from Gogs: \lstinline{SetContextVar("repo", Get("id")
 %% \fi
 %% 
 
-The function type of \lstinline{retrieve} is as follows:
+The function type of \lstinline{retrieve} is produce in Code Snippet~\ref{code:retrieveFunctionType}.
 
-\begin{lstlisting}[float=h]
+\begin{lstlisting}[float=h,label=code:retrieveFunctionType,caption=The function type of the \lstinline{retrieve} function.]
 retrieve(r *ExtendedRequest, scope scopeContainer) interface{}
 \end{lstlisting}
 

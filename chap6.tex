@@ -7,7 +7,7 @@
 
 \chapter{Case Studies}\label{Chap:CaseStudies}
 
-This chapter presents three case studies used to evaluate the WebAuthn firewall. Each case study involves using the WebAuthn firewall on a web service that is unique in some fundamental way. The variability stress tests the firewall's two main objectives: minimal intrusiveness and ease of configuration. The case studies provide guidance on what aspects of the firewall need configuration and precisely how detailed versus general those configurable options should be to be beneficial without becoming overly burdensome.
+This chapter presents three case studies used to evaluate \sys{}. Each case study involves using \sys{} on a web service that is unique in some fundamental way. This variability stress tests \sys{}'s two main objectives: minimal intrusiveness and ease of configuration. The case studies provide guidance on what aspects of \sys{} need configuration and precisely how detailed versus general those configurable options should be to be beneficial without becoming overly burdensome.
 
 \section{Conduit}
 
@@ -66,7 +66,7 @@ The simplicity of the Conduit application does not challenge the domain specific
 
 \section{Calypso}
 
-Calypso is a RESTful frontend for a WordPress admin panel \cite{calypso}. This is a production service, with far greater complexity than the Conduit application. Also, unlike Conduit with a backend running locally, which can be modified, Calypso accesses the official WordPress backend servers. These servers are closed-source and their modification is out of question. Whereas avoiding backend modifications for Conduit is a favorable result, with Calypso it is a necessity. Nonetheless, integrating WebAuthn is possible because the RESTful API of WordPress was complete enough to satisfy the needs of the WebAuthn firewall.
+Calypso is a RESTful frontend for a WordPress admin panel \cite{calypso}. This is a production service, with far greater complexity than the Conduit application. Also, unlike Conduit with a backend running locally, which can be modified, Calypso accesses the official WordPress backend servers. These servers are closed-source and their modification is out of question. Whereas avoiding backend modifications for Conduit is a favorable result, with Calypso it is a necessity. Nonetheless, integrating WebAuthn is possible because the RESTful API of WordPress was complete enough to satisfy the needs of \sys{}.
 
 \subsection{Multi-Target Proxying}
 
@@ -77,13 +77,19 @@ Calypso is a RESTful frontend for a WordPress admin panel \cite{calypso}. This i
   \label{Fig:MultiTargetCalypso}
 \end{figure}
 
-Unlike the other two case studies, a point of complexity that Calypso has is that the frontend accesses multiple backends. Typically, the frontend requests to a single backend source. However, as shown in Figure~\ref{Fig:MultiTargetCalypso}, the Calypso frontend interfaces with two backend targets. WordPress has a backend for API requests, \lstinline{"public-api.wordpress.com"}, that accepts JSON payloads. Most of Calypso interacts with this backend. However, login requests go to the regular \lstinline{"wordpress.com"} backend which uses form-data payloads. This architecture design requirres the firewall to support multi-target proxying. Requests sent to the firewall contain their destined targets in their headers, and the firewall proxies accordingly. The firewall configuration for Calypso lists both of those target domains along with \lstinline{GetJSONInput} and \lstinline{GetFormInput} as their default input handlers respectively. 
+%% 
+%% \iffalse
+%% Requests sent to the firewall contain their destined targets in their headers, and the firewall proxies accordingly. 
+%% \fi
+%% 
+
+Unlike the other two case studies, a point of complexity that Calypso has is that the frontend accesses multiple backends. Typically, the frontend requests to a single backend source. However, as shown in Figure~\ref{Fig:MultiTargetCalypso}, the Calypso frontend interfaces with two backend targets. \sys{} receives requests with target addresses \lstinline{"public-api.wordpress.com"} and \lstinline{"wordpress.com"} in their headers. It must proxy them to their respective backends accordingly. One WordPress backend is for API requests located at \lstinline{"public-api.wordpress.com"} and accepts JSON payloads. Most of Calypso interacts with this backend. However, login requests go to the a backend at \lstinline{"wordpress.com"} which uses form-data payloads. This architecture design requires that \sys{} supports multi-target proxying with separate default input getter functions per target. The firewall configuration for Calypso lists both of those target domains along with \lstinline{GetJSONInput} and \lstinline{GetFormInput} as their default input handlers respectively. 
 
 \subsection{Login}\label{Sec:CalypsoLogin}
 
-The WebAuthn firewall automatically protects a number of core WebAuthn routes, including the route for login, as described in Section~\ref{Sec:DefaultHandlers}. However, the Calypso project approaches login in an atypical fashion. Normally a service has a dedicated route for login. Calypso shares a login route with other operations, so HTTP requests are identified by an \lstinline{"action"} field in their payload, similarly as described in Section~\ref{Sec:CustomHandlers}. As a result, the default login handler cannot support Calypso directly. Extending the default login handler to be customizable for this one specific case would make the firewall's configuration too complicated. Rather, a custom login handler implements the Calypso login event. The login handler roughly resembles the following Go pseudo-code:
+\sys{} automatically protects a number of core WebAuthn routes, including the route for login, as described in Section~\ref{Sec:DefaultHandlers}. However, the Calypso project approaches login in an atypical fashion. Normally a service has a dedicated route for login. Calypso shares a login route with other operations, so HTTP requests are identified by an \lstinline{"action"} field in their payload, similarly as described in Section~\ref{Sec:CustomHandlers}. As a result, the default login handler cannot support Calypso directly. Extending the default login handler to be customizable for this one specific case would make \sys{}'s configuration too complicated. Rather, a custom login handler implements the Calypso login event. The login handler roughly resembles the Go pseudo-code in Code Snippet~\ref{code:finishLogin}.
 
-\begin{lstlisting}[float=h]
+\begin{lstlisting}[float=h,label=code:finishLogin,caption=Go pseudo-code for the custom login handler for Calypso.]
 func finishLogin(w http.ResponseWriter, req *wf.ExtendedRequest) {
   action := req.Get("action")
   switch action {
@@ -132,7 +138,7 @@ Table~\ref{Table:CalypsoSecuredRoutes} lists the secured operations of Calypso w
 \end{table}
 
 Certain domain specific programs have multiple context retrievals. Others have multiple format tags to fill, and one program requires a special formatting function. Apart from the custom login handler, there is no case where a custom handler is necessary. 
-The ``Invite New Users to Site'' route receives HTTP request containing an array of elements that need to be comma separated in the authentication message. Rather than implementing a custom handler for this minor inconvenience, the \lstinline{Apply} domain specific operation described in Table~\ref{Table:DSL_GetterOperations} resolves this problem. It enables Go code to be used within a domain specific program to a limited extent. The following is a domain specific program for inviting new users to administer a WordPress blog.
+The ``Invite New Users to Site'' route receives HTTP request containing an array of elements that need to be comma separated in the authentication message. Rather than implementing a custom handler for this minor inconvenience, the \lstinline{Apply} domain specific operation described in Table~\ref{Table:DSL_GetterOperations} resolves this problem. It enables Go code to be used within a domain specific program to a limited extent. Code Snippet~\ref{code:inviteNewUsersDSL} is a domain specific program for inviting new users to administer a WordPress blog.
 
 %% 
 %% \iffalse
@@ -140,7 +146,7 @@ The ``Invite New Users to Site'' route receives HTTP request containing an array
 %% \fi
 %% 
 
-\begin{lstlisting}[float=h]
+\begin{lstlisting}[float=h,label=code:inviteNewUsersDSL,caption=A domain specific program to secure the Calypso operation for inviting new users to administer a WordPress blog.]
 Secure("POST", "/rest/{version}/sites/{site_id}/invites/new", 
   Authn("Invite new user(s): %v",
     wf.Apply(func(args ...interface{}) (interface{}, error) {
@@ -154,7 +160,7 @@ The \lstinline{Authn} operation string formats the argument of \lstinline{wf.Get
 
 \section{Gogs}
 
-Gogs is a server-side rendered self-hosted Git web service \cite{gogs}. A server-side rendered web-application presents its own set of challenges to the WebAuthn firewall. Section~\ref{Sec:ProxyingRequests} explains how the firewall has to be the end-point interacting with the user's web-browser. The firewall must obtain the context from the Gogs backend. The backend does not, however, conveniently expose context routes like RESTful backends as discussed in Section~\ref{Sec:Conduit_ContextRetrieval}.
+Gogs is a server-side rendered self-hosted Git web service \cite{gogs}. A server-side rendered web-application presents its own set of challenges to the WebAuthn firewall. Section~\ref{Sec:ProxyingRequests} explains how \sys{} has to be the end-point interacting with the user's web-browser. The firewall must obtain the context from the Gogs backend. The backend does not, however, conveniently expose context routes like RESTful backends as discussed in Section~\ref{Sec:Conduit_ContextRetrieval}.
 
 %% 
 %% \iffalse
@@ -164,7 +170,7 @@ Gogs is a server-side rendered self-hosted Git web service \cite{gogs}. A server
 
 \subsection{Intrusive WebAuthn}
 
-The Gogs web service was the first of the three case-studies. Before the WebAuthn firewall became a mature idea, part of Gogs was secured in the traditional, intrusive fashion described in Section~\ref{Sec:StatusQuo}. This work is redone using the WebAuthn firewall approach once it proved itself as a prospective design approach.
+The Gogs web service was the first of the three case-studies. Before \sys{} became a mature idea, part of Gogs was secured in the traditional, intrusive fashion described in Section~\ref{Sec:StatusQuo}. This work is redone using the WebAuthn firewall approach once it proved itself as a prospective design approach.
 
 The two main challenges with integrating WebAuthn into Gogs intrusively are the database adapter and organizational difficulties. WebAuthn needs a database table to record entries of users' public key credentials. Simply creating a new table in Gogs requires writing a custom database model for the table as well as modifying the codebase in a number of separate locations. Furthermore, the handlers for various Gogs routes are spread throughout the code. Keeping track of which routes are WebAuthn secured becomes increasingly more difficult as more routes are protected.
 
@@ -225,7 +231,7 @@ Table~\ref{Table:GogsSecuredRoutes} lists the secured operations with a sample a
 %% TODO: Figure out how to remove numbering and frame
  \begin{lstlisting} 
 "Publish release named: Version 4.20
-   File names: release.tar.gz, release_x86"
+   File names: release.tar.gz, release"
 \end{lstlisting} 
 \\ \hline
 
@@ -248,10 +254,11 @@ As with the other case-studies, most of the routes are simple and easy to secure
 %% \fi
 %% 
 
-Gogs requires a more involved custom handler for protecting the ``Publish New Release'' operation. The files associated with a new release are contained as UUIDs in the HTTP request. So each file needs context retrieval to retrieve the file name, which then must be comma separated in the format string. Rather than expressing this series of operations and formatting in an \lstinline{Apply} operation like with Calypso in Section~\ref{Sec:CalypsoSecuredRoutes}, it is easier to drop down to a custom handler function. The following code snippet is Go pseudo-code for the custom handler.
+Gogs requires a more involved custom handler for protecting the ``Publish New Release'' operation. The files associated with a new release are contained as UUIDs in the HTTP request. So each file needs context retrieval to retrieve the file name, which then must be comma separated in the format string. Rather than expressing this series of operations and formatting in an \lstinline{Apply} operation like with Calypso in Section~\ref{Sec:CalypsoSecuredRoutes}, it is easier to drop down to a custom handler function. The custom handler function written in Go pseudo-code is produced in Code Snippet~\ref{code:publishNewRelease}.
 
-\begin{lstlisting}[float=h]
-func publishNewRelease(w http.ResponseWriter, r *wf.ExtendedRequest) {
+\begin{lstlisting}[float=h,label=code:publishNewRelease,caption=A custom handler in Go pseudo-code to secure the Gogs operation for publishing a new release.]
+func publishNewRelease(w http.ResponseWriter, 
+                       r *wf.ExtendedRequest) {
   title := r.Get("title")
   uuids := r.Request.Form["files"]
 
@@ -261,7 +268,8 @@ func publishNewRelease(w http.ResponseWriter, r *wf.ExtendedRequest) {
   }
 
   authText := fmt.Sprintf("Publish release named: %v", title)
-  authText += fmt.Sprintf("\nFile names: %s", strings.Join(names, ", "))
+  authText += fmt.Sprintf("\nFile names: %s", 
+                          strings.Join(names, ", "))
 
   handlerFn := firewall.Authn(authText)
   handlerFn(w, r)

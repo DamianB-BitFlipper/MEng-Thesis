@@ -6,7 +6,7 @@
 %% prompt when you run the file main.tex through LaTeX.
 \chapter{Introduction}
 
-This thesis contributes an application-level firewall to add transaction authentication to any existing web application. This chapter describes two core concepts of the threat model and transaction authentication, which are essential to understand before introducing the firewall and the problems it solves. This chapter paints a broad picture of the overall thesis. The sections here serve as a preludes for the chapters that follow in the thesis body.
+This thesis contributes \sys{}, an application-level firewall to add transaction authentication to an existing web application. This chapter describes two core concepts of the threat model and transaction authentication, which are essential to understand before introducing \sys{} and the problems it solves. This chapter paints a broad picture of the overall thesis. The sections here serve as a preludes for the chapters that follow in the thesis body.
 
 
 %% 
@@ -27,7 +27,13 @@ This thesis contributes an application-level firewall to add transaction authent
 
 Websites which have user accounts traditionally use a password as their main form of authenticating the user. The security assumption is that if an adversary does not have the user's password, the user is safe from any adversarial attacks. Password compromises are common \cite{questRemovePasswords} because they are easy to target and attack remotely and at scale. Security researchers have been well-aware of the gaping security risks of only using password authentication and thus have developed a security system called two-factor authentication \cite{2FA}. In one form, upon account registration, the user not only picks a password, but also provides a secondary method for login authentication, usually through a hardware device. Then to login, the user must supply the password as well as physically authenticate the login on their hardware authenticator. However, this commonly used mechanism does not offer protection in a stronger threat model where an adversary has control over a user's web-browser or operating system. 
 
-The World-Wide-Web Consortium (W3C) proposed a specification called \textit{WebAuthn} \cite{webauthn}. It supports extensions to the traditional two-factor authentication. One extension is a mechanism called \textit{transaction authentication} which provides a number of security guarantees within this new and broader threat model. This thesis proposes a WebAuthn firewall design similar to a Web Application Firewall (WAF) that allows easier integration of transaction authentication into a web service.
+The World-Wide-Web Consortium (W3C) proposed a specification called \textit{WebAuthn} \cite{webauthn}. It supports extensions to the traditional two-factor authentication. One extension is a mechanism called \textit{transaction authentication}, which provides a number of security guarantees within this new and broader threat model. 
+
+%% 
+%% \iffalse
+%% This thesis proposes a WebAuthn firewall design similar to a Web Application Firewall (WAF) that allows easier integration of transaction authentication into a web service.
+%% \fi
+%% 
 
 %% 
 %% \iffalse
@@ -65,7 +71,7 @@ The World-Wide-Web Consortium (W3C) proposed a specification called \textit{WebA
 %% \fi
 %% 
 
-WebAuthn transaction authentication protects against a stricter threat model than traditional two-factor authentication. In transaction authentication, the threat model assumes that all components except the web service code and hardware authenticator device are vulnerable. This broad capability give an adversary the ability to create or modify any HTTP requests between the user and web service. Save from defending against denial-of-service, transaction authentication prevents broad unauthorized access to a user's account by the adversary. There is an exception to the threat model where the entire registration event, where cryptographic public key information is sent from the user to the web service, must be assumed secure in order to provide its prescribed security guarantees.
+WebAuthn transaction authentication protects against a stricter threat model than traditional two-factor authentication. In transaction authentication, the threat model assumes that all components except the web service code and hardware authenticator device are vulnerable. This broad capability gives an adversary the ability to create or modify any HTTP requests between the user and web service. Save from defending against denial-of-service, transaction authentication prevents broad unauthorized access to a user's account by the adversary. There is an exception to the threat model: the entire registration event, where cryptographic public key information is sent from the user to the web service, must be assumed secure in order to provide its prescribed security guarantees.
 
 %% 
 %% \iffalse
@@ -73,7 +79,7 @@ WebAuthn transaction authentication protects against a stricter threat model tha
 %% \fi
 %% 
 
-In contrast, the threat model for traditional two-factor authentication assumes a more limited adversary. This adversary has the capacity to launch phishing attacks and steal passwords, but the operating system and web-browser are assumed secure. If any of them were to be compromised, two-factor authentication fails to ensure its security guarantees. For example, a compromised user web-browser can wait for the user to authenticate and login faithfully and then take complete control of the account. Transaction authentication protects against such failure modes.
+In contrast, the threat model for traditional two-factor authentication assumes a more limited adversary. This adversary has the capacity to launch phishing attacks and steal passwords, but the operating system and web-browser are assumed secure. If any of them were to be compromised, two-factor authentication fails to ensure its security guarantees. For example, a compromised user web-browser can wait for the user to authenticate and login faithfully and then take control of the account. Transaction authentication protects against such failure modes.
 
 %% 
 %% \iffalse
@@ -106,7 +112,7 @@ In contrast, the threat model for traditional two-factor authentication assumes 
 
 The purpose of transaction authentication is to require ``high-risk'' operations to be individually authenticated by the user's hardware authenticator, despite the user being already logged in. 
 
-A number of components are at play during transaction authentication. From the user's perspective, they must posses a hardware authenticator device with a text display on which they attest to operations they want to perform. On the other end is the verification code which guarantees that the user's attestations are correct and valid. This code typically runs on the backend, but in the case of this research, it is a part of the WebAuthn firewall.
+A number of components are at play during transaction authentication. From the user's perspective, they must posses a hardware authenticator device with a text display on which they attest to operations they want to perform. On the other end is the verification code that guarantees that the user's attestations are correct and valid. This code typically runs on the backend, but in the case of this research, it is a part of \sys{}.
 
 So when the user tries to issue some high-risk operation, e.g., a monetary transfer, a confirmation message on their hardware authenticator will appear. The message is specific to the operation the user is trying to perform and should contain enough information for the user to validate that it is indeed correct and as intended. 
 
@@ -131,11 +137,11 @@ For example, a bank website could require that monetary transfers exceeding \$50
 
 This message contains enough information such that the user is fully informed of the operation they are about to perform. They can then make the educated judgment for whether to confirm the operation or not. In the adversarial event where a modified or unsolicited monetary transfer is attempted, the user should notice a discrepancy in the authentication message and decline the operation on the hardware authenticator. 
 
-The goal of transaction authentication is to prevent the adversary from launching unsolicited operations on behalf of the user and causing fraudulence or damage. The operations that matter will require this additional authentication which the adversary cannot falsify as per the threat model --- the hardware device is assumed secure. This is a safe assumption because the hardware device is specialized to perform only this authentication process and nothing more. Ideally, it should have a minimal attack surface that is vetted by security specialists. 
+The goal of transaction authentication is to prevent the adversary from launching unsolicited operations on behalf of the user and causing fraudulence or damage. The operations that matter will require this additional authentication which the adversary cannot falsify as per the threat model --- the hardware device is assumed secure. This is a safe assumption because the hardware device is specialized to perform only this authentication process and nothing more. Ideally, it has a small attack surface that is vetted by security specialists. 
 
-When the user authorizes this high-risk operation on their hardware authenticator, the message is cryptographically signed by the authenticator and sent back to the verifying end where it gets checked. Only then, upon successful verification is the operation performed. 
+When the user authorizes this high-risk operation on their hardware authenticator, the message is cryptographically signed by the authenticator and sent back to the verifying end where it is checked. Only then, upon successful verification is the operation performed. 
 
-Which operations get protected is entirely at the discretion of the administrator of the web service. There is no clear-cut formula on what to protect, but candidate high-risk operations could include, but are not limited to, deleting one's account, transferring money, managing administrative permissions, publishing important software releases, etc. 
+Which operations should be protected is entirely at the discretion of the administrator of the web service. There is no clear-cut formula on what to protect, but candidate high-risk operations could include, but are not limited to, deleting one's account, transferring money, managing administrative permissions, publishing important software releases, etc. 
 
 
 %% 
@@ -170,7 +176,9 @@ Although WebAuthn describes transaction authentication in its protocol specifica
 %% \fi
 %% 
 
-There are several publicly available codebases in the form of demo applets and libraries that work with WebAuthn \cite{webauthn-online-examples} to illustrate how it can be used in a website. A website typically consists of a frontend and a backend. The frontend is the HTML/CSS/JavaScript that runs in the user's web-browser and is the origin of all of the user's requests when interacting with the website. The backend consists of the server code and database store that executes the user's requests from the frontend. A web service using WebAuthn would have the frontend issue the WebAuthn requests and have the backend contain the WebAuthn library code to verify those requests and permit the operation if everything passes. Such approach to integrating WebAuthn has a number of practical downsides. 
+There are several publicly available codebases in the form of demo applets and libraries that work with WebAuthn \cite{webauthn-online-examples} to illustrate how it can be used in a website. A website typically consists of a frontend and a backend. The frontend is the HTML/CSS/JavaScript that runs in the user's web-browser and is the origin of all of the user's requests when interacting with the website. The backend consists of the server code and database store that executes the user's requests from the frontend. 
+
+A web service using WebAuthn would have the frontend issue the WebAuthn requests and have the backend contain the WebAuthn library code to verify those requests and permit the operation if everything passes. Such approach to integrating WebAuthn has a number of practical downsides. 
 
 %% 
 %% \iffalse
@@ -190,9 +198,9 @@ There are three major contributions of this thesis.
 
 \begin{enumerate}[nosep]
 
-\item A firewall system design for integrating WebAuthn transaction authentication into a new or existing web service.
+\item \sys{}: A firewall system design for integrating WebAuthn transaction authentication into a new or existing web service.
 
-\item Three distinct case studies showcasing the WebAuthn firewall. Each case study observed a class of web service and was used to test the limits of the usability of the firewall.
+\item Three distinct case studies showcasing \sys{}. Each case study observed a class of web service and was used to test the limits of the usability of \sys{}.
 
 \item A discussion on the beneficial use cases for transaction authentication, when it makes sense to be applied and when not.
 
@@ -211,11 +219,11 @@ Firstly, it must be emphasized that WebAuthn is simply a protocol specification.
 \begin{figure}[h]
   \centering
   \includegraphics[width=12cm]{firewall_drawio}
-  \caption{Basic depiction of WebAuthn firewall functionality.}
+  \caption{Basic depiction of the WebAuthn firewall functionality.}
   \label{Fig:BasicFirewallDepiction}
 \end{figure}
 
-This thesis proposed an alternative method for integrating WebAuthn, namely as a Web Application Firewall (WAF). This firewall monitors and filters HTTP traffic sent from the website webpage to the backend. Any requests that the firewall deems as needing WebAuthn transaction authentication are stopped and processed by it. The firewall validates the request according to the WebAuthn transaction authentication specification. Figure~\ref{Fig:BasicFirewallDepiction} depicts how if the validation succeeds, then the firewall lets the request pass on through to the backend. If not, then the request is blocked. As far as the backend is concerned, it is unaware that a firewall exists between it and the website webpage. 
+This thesis proposes an alternative method for integrating WebAuthn with \sys{}, a Web Application Firewall (WAF). This firewall monitors and filters HTTP traffic sent from the website webpage to the backend. Any requests that the firewall deems as needing WebAuthn transaction authentication are stopped and processed by it. The firewall validates the request according to the WebAuthn transaction authentication specification. Figure~\ref{Fig:BasicFirewallDepiction} depicts how if the validation succeeds, then the firewall lets the request pass on through to the backend. If not, then the request is blocked. As far as the backend is concerned, it is unaware that \sys{} exists between it and the website webpage. 
 
 With the WebAuthn firewall approach, the backend has to be minimally, if at all, modified to support WebAuthn transaction authentication. Although the website still needs to be modified to produce the WebAuthn transaction authentication requests as it is the origin of all of the user's operations, the firewall approach lends itself better to integrating WebAuthn into a new or existing web service. It is less intrusive than the traditional library-based method and consolidates all of the WebAuthn related code in one place. As a result, it is less error-prone and easier to configure. 
 
@@ -233,7 +241,7 @@ With the WebAuthn firewall approach, the backend has to be minimally, if at all,
 %% \fi
 %% 
 
-The WebAuthn firewall presented in this thesis goes beyond simply providing a description and base functionality. It supplies the software engineer with useful defaults and a domain specific language (DSL) to configure the firewall. Namely with a short configuration, the engineer can adapt the firewall to parse and understand whatever input request format the web service uses. Additionally, with only a few lines of code per HTTP route, they can also specify that the route gets checked with transaction authentication and what the authentication message should be in order to pass as valid for that operation. 
+The design of \sys{} presented in this thesis goes beyond simply providing a description and base functionality. It supplies the software engineer with useful defaults and a domain specific language (DSL) to configure \sys{}. Namely with a short configuration, the engineer can adapt \sys{} to parse and understand whatever input request format the web service uses. Additionally, with only a few lines of code per HTTP route, they can also specify that the route gets checked with transaction authentication and what the authentication message should be in order to pass as valid for that operation. 
 
 %% 
 %% \iffalse
@@ -266,7 +274,7 @@ The WebAuthn firewall presented in this thesis goes beyond simply providing a de
   \label{Fig:CaseStudiesServerSide}
 \end{figure}
 
-Three separate case studies demonstrate how the WebAuthn firewall secures different architectures of web applications with WebAuthn transaction authentication. The web applications studied cover the RESTful design paradigm and the more traditional server-side rendering paradigm. The two RESTful applications studied are Conduit \cite{conduit}, a simple blog website, and Calypso \cite{calypso}, a frontend admin panel for WordPress. As illustrated in Figure~\ref{Fig:CaseStudiesRESTful}, the RESTful paradigm is where the frontend runs in the web-browser separately from the web-server backend program. The frontend performs the rendering visible to the user, and whenever it needs to fetch information or has to perform some server operation, it communicates via a pre-established API to the web-server, which executes those requests. 
+Three separate case studies demonstrate how \sys{} secures different architectures of web applications with WebAuthn transaction authentication. The web applications studied cover the RESTful design paradigm and the more traditional server-side rendering paradigm. The two RESTful applications studied are Conduit \cite{conduit}, a simple blog website, and Calypso \cite{calypso}, a frontend admin panel for WordPress. As illustrated in Figure~\ref{Fig:CaseStudiesRESTful}, the RESTful paradigm is where the frontend runs in the web-browser separately from the web-server backend program. The frontend performs the rendering visible to the user, and whenever it needs to fetch information or has to perform some server operation, it communicates via a pre-established API to the web-server, which executes those requests. 
 
 The server-side rendering application studied is Gogs \cite{gogs}, a self-hosted Git service much like GitHub \cite{github}. Figure~\ref{Fig:CaseStudiesServerSide} depicts the server-side rendering paradigm, where every operation the user performs on the webpage gets sent over to the server as a HTTP request. In response, the server returns a whole new webpage, complete with all of the HTML and JavaScript code to be displayed on the user's web-browser.
 
@@ -276,7 +284,7 @@ The server-side rendering application studied is Gogs \cite{gogs}, a self-hosted
 %% \fi
 %% 
 
-These case studies stress test the flexibility and configurability of the WebAuthn firewall. They were critical in establishing what parameters and configurable knobs the firewall should provide. They are also used to evaluate how tangible the improvements are for using the firewall in a service rather than more traditionally integrating WebAuthn transaction authentication intrusively. 
+These case studies stress test the flexibility and configurability of \sys{}. They are critical in establishing what parameters and configurable knobs \sys{} should provide. They are also used to evaluate how tangible the improvements are for using \sys{} in a web service rather than more traditionally integrating WebAuthn transaction authentication intrusively. 
 
 %% 
 %% \iffalse
@@ -330,8 +338,14 @@ In this thesis, Chapter~\ref{Chap:DiscussionAndFutureWork} gives insights into b
 
 \subsection{Source Code}
 
-The source code of the WebAuthn firewall and case studies is publicly available at \url{https://github.com/JSmith-BitFlipper/webauthn-firewall-proxy} under the MIT License. Cheers! 
+The source code of \sys{} and case studies is publicly available at \url{https://github.com/JSmith-BitFlipper/webauthn-firewall-proxy} under the MIT License.
+
+%% 
+%% \iffalse
+%% Cheers! 
+%% \fi
+%% 
 
 \section{Thesis Outline}
 
-The thesis body is containing in the following chapters. Chapter~\ref{Chap:RelatedWork} discusses the related work and background pertinent to this research. Chapter~\ref{Chap:WebauthnTransactionAuthentication} describes the WebAuthn transaction authentication protocol in detail. Chapter~\ref{Chap:WebauthnFirewallDesign} outlines the design of the WebAuthn firewall. Chapter~\ref{Chap:WebauthnFirewallImplementation} discusses the implementation details of the novel components of the firewall. Chapter~\ref{Chap:CaseStudies} explains the case studies of the WebAuthn firewall. Chapter~\ref{Chap:Evaluation} contains the experiments and evaluation metrics for the firewall. Chapter~\ref{Chap:DiscussionAndFutureWork} opens a discussion of supplemental notes uncovered over the course of this research. Finally, Chapter~\ref{Chap:Conclusion} concludes this thesis.
+The thesis body is containing in the following chapters. Chapter~\ref{Chap:RelatedWork} discusses the related work and background pertinent to this research. Chapter~\ref{Chap:WebauthnTransactionAuthentication} describes the WebAuthn transaction authentication protocol in detail. Chapter~\ref{Chap:WebauthnFirewallDesign} outlines the design of \sys{}, the WebAuthn firewall. Chapter~\ref{Chap:WebauthnFirewallImplementation} discusses the implementation details of the novel components of \sys{}. Chapter~\ref{Chap:CaseStudies} explains the case studies of \sys{}. Chapter~\ref{Chap:Evaluation} contains the experiments and evaluation metrics for \sys{}. Chapter~\ref{Chap:DiscussionAndFutureWork} opens a discussion of supplemental notes uncovered over the course of this research. Finally, Chapter~\ref{Chap:Conclusion} concludes this thesis.

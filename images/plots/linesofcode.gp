@@ -17,5 +17,5 @@ set ylabel font ",13"
 set title "Frequencies of Secured Route Sizes\n{/*0.8 Across All Case Studies}"
 set title font ",16"
 
-plot "linesofcode.dat" using 1:2 every ::0::20 title "Domain Specific Language" linecolor "navy" with boxes, \
+plot "linesofcode.dat" using 1:2 every ::0::20 title "Domain Specific Language" linecolor "web-blue" with boxes, \
      "linesofcode.dat" using 1:2 every ::21::42 title "Custom Handler" linecolor "orange-red" with boxes

@@ -93,7 +93,7 @@ For example, the Gogs web sever has code and database tables pertaining to repos
 Securing a route with transaction authentication requires careful planning to avoid any vulnerabilities of directly or indirectly subverting the protection. Direct subversion actively evades the transaction authentication protection. Indirect subversion tricks the user into transaction authenticating some operation that actually is undesired.
 
 \subsection{Direct Subversion}
-If the disable WebAuthn event were not transaction authentication secured, a trivial example of direct subversion is possible. The adversary could disable WebAuthn before performing any sensitive operation. To avoid this, the disable WebAuthn operation is one of the default operations protected by the firewall as discussed in Section~\ref{Sec:ConfigurationParameters}.
+If the disable WebAuthn event were not transaction authentication secured, a trivial example of direct subversion is possible. The adversary could disable WebAuthn before performing any sensitive operation. To avoid this, the disable WebAuthn operation is one of the default operations protected by \sys{} as discussed in Section~\ref{Sec:ConfigurationParameters}.
 
 %% 
 %% \iffalse

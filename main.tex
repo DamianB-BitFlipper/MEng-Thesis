@@ -48,8 +48,12 @@
     showstringspaces=false, 
     stringstyle=\color{blue},
     tabsize=4,
-    language=Golang % this is it !
+    language=Golang, % this is it !
+    captionpos=b, % sets the caption-position to bottom
 }
+
+\renewcommand\lstlistingname{Code Snippet}
+\renewcommand{\lstlistlistingname}{Code Snippets}
 
 \usepackage{graphicx}
 \graphicspath{ {./images/} }
@@ -63,6 +67,8 @@
 \pagestyle{plain}
 
 \renewcommand{\arraystretch}{1.7}
+
+\newcommand{\sys}{{Felix}} 
 
 %% This bit allows you to either specify only the files which you wish to
 %% process, or `all' to process all files which you \include.

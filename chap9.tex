@@ -7,7 +7,7 @@
 
 \chapter{Conclusion}\label{Chap:Conclusion}
 
-This thesis presents a WebAuthn firewall architecture with the central aim of reducing the burden for integrating transaction authentication into a new or existing web service. Before this research, WebAuthn would be integrated directly into the web service's codebase, which is time consuming and difficult to maintain. The firewall approach enables an engineer to configure a ruleset for the firewall using the domain specific language and, if necessary, custom handlers. This configuration determines which HTTP requests are high-risk and which are not. The firewall processes those that are deemed high-risk and only allows them to pass through if the transaction authentication validates successfully.
+This thesis presents \sys{}, a WebAuthn firewall architecture with the central aim of reducing the burden for integrating transaction authentication into a new or existing web service. Before this research, WebAuthn would be integrated directly into the web service's codebase, which is time consuming and difficult to maintain. The firewall approach enables an engineer to configure a ruleset for the firewall using the domain specific language and, if necessary, custom handlers. This configuration determines which HTTP requests are high-risk and which are not. The firewall processes those that are deemed high-risk and only allows them to pass through if the transaction authentication validates successfully.
 
 Three case studies with evaluations justify the advantages of this system over integrating WebAuthn intrusively.
 
@@ -34,7 +34,7 @@ Three case studies with evaluations justify the advantages of this system over i
 %% \fi
 %% 
 
-\item Intrusiveness: In both RESTful case studies using the WebAuthn firewall, no modifications are necessary to the backend. The Gogs case study with the firewall requires 169 lines of code changes. Contrasted to the almost 1300 lines of code change over 18 different files for the intrusive Gogs case study, the firewall is the significantly less invasive approach.
+\item Intrusiveness: In both RESTful case studies using \sys{}, no modifications are necessary to the backend. The Gogs case study with \sys{} requires 169 lines of code changes. Contrasted to the almost 1300 lines of code change over 18 different files for the intrusive Gogs case study, the firewall is the significantly less invasive approach.
 
   %% 
 %% \iffalse
@@ -44,7 +44,7 @@ Three case studies with evaluations justify the advantages of this system over i
 
 \end{itemize}
 
-The firewall does incur a performance penalty, which varies depending on the implementation details of the web service. The session ID implementation of Gogs requires that the firewall make an HTTP request in order to identify the current user issuing a request. Under heavy concurrent load, the latency penalty of the additional HTTP request is as high as 70 milliseconds.
+The firewall does incur a performance penalty, which varies depending on the implementation details of the web service. The session ID implementation of Gogs requires that \sys{} make an HTTP request in order to identify the current user issuing a request. Under heavy concurrent load, the latency penalty of the additional HTTP request is as high as 70 milliseconds.
 
 In conclusion, the WebAuthn firewall architecture is flexible and extensible. With relatively little effort, it can equip even a production level web service with WebAuthn transaction authentication. When well tuned for performance, such a WebAuthn firewall architecture design is an appealing option for greater web security.
 
