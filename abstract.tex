@@ -40,7 +40,7 @@ This thesis presents \sys{}, a firewall for integrating transaction authenticati
 %% \fi
 %% 
 
-This thesis uses the firewall approach to integrate transaction authentication into three web applications. Compared to directly modifying them to support transaction authentication, the firewall approach is close to 8 times more concise. Under heavy load, there is an associated latency of at worst 1.5x slower when using \sys{} versus accessing the original web service directly without WebAuthn.
+This thesis uses the firewall approach to integrate transaction authentication into three web applications: a blogging site named Conduit, a WordPress admin panel named Calypso and a self-hosted Git service named Gogs. Compared to directly modifying them to support transaction authentication, the firewall approach is close to 8 times more concise. Under heavy load, there is an associated latency of at worst 1.5x slower when using \sys{} to secure Gogs versus accessing the web service directly without WebAuthn.
 
 %% 
 %% \iffalse
