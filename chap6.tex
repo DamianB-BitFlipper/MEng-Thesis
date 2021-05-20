@@ -83,7 +83,7 @@ Calypso is a RESTful frontend for a WordPress admin panel~\cite{calypso}. This i
 %% \fi
 %% 
 
-Unlike the other two case studies, a point of complexity that Calypso has is that the frontend accesses multiple backends. Typically, the frontend requests to a single backend source. However, as shown in Figure~\ref{Fig:MultiTargetCalypso}, the Calypso frontend interfaces with two backend targets. \sys{} receives requests with target addresses \lstinline{"public-api.wordpress.com"} and \lstinline{"wordpress.com"} in their headers. It must proxy them to their respective backends accordingly. One WordPress backend is for API requests located at \lstinline{"public-api.wordpress.com"} and accepts JSON payloads. Most of Calypso interacts with this backend. However, login requests go to a backend at \lstinline{"wordpress.com"} which uses form-data payloads. This architecture design requires that \sys{} supports multi-target proxying with separate default input getter functions per target. The firewall configuration for Calypso lists both of those target domains along with \lstinline{GetJSONInput} and \lstinline{GetFormInput} as their default input handlers respectively. 
+Unlike the other two case studies, a point of complexity that Calypso has is that the frontend accesses multiple backends. Typically, the frontend requests to a single backend source. However, as shown in Figure~\ref{Fig:MultiTargetCalypso}, the Calypso frontend interfaces with two backend targets. \sys{} receives requests with target addresses \lstinline{"public-api.wordpress.com"} and \lstinline{"wordpress.com"} in their headers. It must proxy them to their respective backends accordingly. One WordPress backend is for API requests located at \lstinline{"public-api.wordpress.com"} and accepts JSON payloads. Most of Calypso interacts with this backend. However, login requests go to a backend at \lstinline{"wordpress.com"} which uses form-data payloads. This architecture design requires that \sys{} support multi-target proxying with separate default input getter functions per target. The firewall configuration for Calypso lists both of those target domains along with \lstinline{GetJSONInput} and \lstinline{GetFormInput} as their default input handlers respectively. 
 
 \subsection{Login}\label{Sec:CalypsoLogin}
 
@@ -244,10 +244,12 @@ Table~\ref{Table:GogsSecuredRoutes} lists the secured operations with a sample a
 
 \subsection{Custom Handlers}\label{Sec:Gogs_CustomHandlers}
 
-As with the other case-studies, most of the routes are simple and easy to secure using the domain specific language. At most they require a context retrieval to fill a single format tag. Within the Gogs service, the ``Delete Repository'' and ``Set Primary Email'' operations in Table~\ref{Table:GogsSecuredRoutes} each share the same HTTP route for multiple different HTTP operations. Similarly to the login route of Calypso discussed in Section~\ref{Sec:CalypsoLogin}, requests have an \lstinline{"action"} field in their payload that delineates the operation type. Only certain actions warrant being transaction authenticated. Custom handlers are used in these cases, to parse the \lstinline{"action"} field and WebAuthn secure only when necessary.
+As with the other case-studies, most of the routes are simple and easy to secure using the domain specific language. At most they require a context retrieval to fill a single format tag. Within the Gogs service, the ``Delete Repository'' and ``Set Primary Email'' operations in Table~\ref{Table:GogsSecuredRoutes} are handled by HTTP routes that also handle multiple other operation types. Similarly to the login route of Calypso discussed in Section~\ref{Sec:CalypsoLogin}, requests have an \lstinline{"action"} field in their payload that delineates the operation type. Only certain actions warrant being transaction authenticated. Custom handlers are used in these cases, to parse the \lstinline{"action"} field and WebAuthn secure only when necessary.
 
  %% 
 %% \iffalse
+%% each share the same HTTP route for multiple different HTTP operations. 
+
 %% there are a number of routes such as the ``Delete Repository'' that are shared by multiple HTTP operations.
 
 %% publishing a new release. 

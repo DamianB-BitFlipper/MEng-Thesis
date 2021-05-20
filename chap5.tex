@@ -254,7 +254,7 @@ Table~\ref{Table:DSL_GetterOperations} outlines the \lstinline{Get} type operati
 
 The \lstinline{retrieve} function of a DSL operation is used to extract a return value from the operation. Whenever a DSL operation is passed as an argument to another operation, the parent operation calls the child's \lstinline{retrieve} in order to resolve the return value. Since these operations are not top-level, they may not affect the format string. Therefore, they do not receive the \lstinline{formatVars} array, only the \lstinline{scope}.
 
-Take the following example from Gogs: \lstinline{SetContextVar("repo", Get("id"))}. The outer \lstinline{SetContextVar} calls \lstinline{retrieve} on the inner \lstinline{Get("id")} to resolve the its return value.
+Take the following example from Gogs: \lstinline{SetContextVar("repo", Get("id"))}. The outer \lstinline{SetContextVar} calls \lstinline{retrieve} on the inner \lstinline{Get("id")} to resolve its return value.
 
 %% 
 %% \iffalse

@@ -21,7 +21,7 @@ This chapter describes the high-level design and purpose of \sys{}, the WebAuthn
   \label{fig:RequestLifeCycle}
 \end{figure}
 
-The flowchart in Figure~\ref{fig:RequestLifeCycle} illustrates the life cycle of an HTTP request passing through the WebAuthn firewall. It begins with \sys{} capturing and parsing it when it is sent from the frontend to the backend. Then \sys{} decides whether to verify those requests with transaction authentication or not. If not, the request is simply proxied through to the backend without any extra work. Otherwise, it performs a verification procedure on the request and only upon success does the request pass through the firewall to the backend. Upon failure, the request is blocked.
+The flowchart in Figure~\ref{fig:RequestLifeCycle} illustrates the life cycle of an HTTP request passing through the WebAuthn firewall. It begins with \sys{} capturing and parsing the request when it is sent from the frontend to the backend. Then \sys{} decides whether to verify the request with transaction authentication or not. If not, the request is simply proxied through to the backend without any extra work. Otherwise, \sys{} performs a verification procedure on the request and only upon success does the request pass through the firewall to the backend. Upon failure, the request is blocked.
 
 \subsection{Securing Sample Operation}
 
@@ -35,7 +35,7 @@ form-data: {
 }
 \end{lstlisting}
 
-This request should map to a human readable authentication message, in particular: \lstinline{"Delete SSH key named: Damian's SSH Key"}. Notice that the HTTP request contains the ID of the SSH key, but not the name itself. The name is not present anywhere in the request, but can be contextualized by the ID from the backend as described in Section~\ref{Sec:ContextRetrieval}. The domain specific language and default functions make this mapping and context retrieval easier. Code Snippet~\ref{code:deleteSSHKey} is roughly what manually securing this route in Go would look like.
+This request should map to a human-readable authentication message, in particular: \lstinline{"Delete SSH key named: Damian's SSH Key"}. Notice that the HTTP request contains the ID of the SSH key, but not the name itself. The name is not present anywhere in the request, but can be contextualized from the ID by the backend as described in Section~\ref{Sec:ContextRetrieval}. The domain specific language and default functions make this mapping and context retrieval easier. Code Snippet~\ref{code:deleteSSHKey} is roughly what manually securing this route in Go would look like.
 
 \begin{lstlisting}[float=h,label=code:deleteSSHKey,caption=Route handler which manually secures the delete SSH key operation of Gogs.] 
 func deleteSSHKey(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +66,7 @@ router.HandleFunc("/user/settings/ssh/delete",
 %% \fi
 %% 
 
-First, the code reads the \lstinline{"id"} and \lstinline{"assertion"} values from the request form-data. It then contextualizes the \lstinline{"id"} to retrieve the name of the associated SSH key via the backend's context route. Finally, it creates an authentication message and verifies it against the \lstinline{"assertion"} data. This handler is attached to the HTTP route for SSH key deletion.
+First, the code reads the \lstinline{"id"} and \lstinline{"assertion"} values from the request form-data. It then contextualizes the \lstinline{"id"} to retrieve the name of the associated SSH key via the backend's context route. Finally, it creates an authentication message and verifies it against the \lstinline{"assertion"} data. This handler is attached to the HTTP route accepting SSH key deletion requests.
 
 The domain specific language and default functions simplify this code. The HTTP route for SSH key deletion, \lstinline{"/user/settings/ssh/delete"}, and request type, \lstinline{"POST"}, are specified in one function call. A short domain specific program specifies how to generate the authentication message. It begins with a format string \lstinline{"Delete SSH key named: %v"} where the format tag \lstinline{"%v"} gets substituted with the SSH key name. Code Snippet~\ref{code:DSLdeleteSSHKey} is the firewall code that secures the SSH key deletion for Gogs.
 
@@ -88,7 +88,7 @@ Secure("POST", "/user/settings/ssh/delete",
 ))
 \end{lstlisting}
 
-As demonstrated above, the traditional method of directly integrating WebAuthn into a web service is bulky and difficult to configure. \sys{} allows an engineer to write less code to achieve the same functionality, thus making development easier and less error-prone.
+As demonstrated above, the direct method of integrating WebAuthn into a web service is bulky and difficult to configure. The supplemental tools provided by \sys{} allow an engineer to write less code to achieve the same functionality, thus making development easier and less error-prone.
 
 %% 
 %% \iffalse
@@ -196,7 +196,7 @@ In a server-side rendering web application, there is no notion of a frontend ren
 
 %% TODO: Make option in firewall to either pass through or block non-specified requests. Modify this paragraph
 
-Some HTTP requests need to be transaction authenticated first before passing through the WebAuthn firewall. The software engineer configures \sys{} to select which requests to verify and what their authentication messages should be. This is done by including the route in \sys{}'s configuration. All other routes not specified in the configuration are simply passed on through to the backend without any checks.
+Some HTTP requests need to be transaction authenticated first before passing through the WebAuthn firewall. The software engineer configures \sys{} to select which requests to verify and what their authentication messages should be. This is done by including the route in \sys{}'s configuration. Requests to all other routes not specified in the configuration are simply proxied on through to the backend without any checks.
 
 %% 
 %% \iffalse
@@ -281,11 +281,11 @@ The second group, \lstinline{FrontendAddress}, \lstinline{ReverseProxyTargetMap}
 %% \fi
 %% 
 
-The third group is for context retrieval, explained in greater detail in Section~\ref{Sec:ContextRetrieval}. During normal operation of the firewall, such as verifying incoming HTTP requests, it is often useful to identify the current user issuing that request. For example, the public key credential of a user are stored under their ID in \sys{}'s database. 
+The third group is for context retrieval, explained in greater detail in Section~\ref{Sec:ContextRetrieval}. During normal operation of the firewall, such as verifying incoming HTTP requests, it is often useful to identify the current user issuing that request. For example, the public key credential of a user is stored under their ID in \sys{}'s database. 
 
-Since determining the current user's ID is application specific, the \lstinline{GetUserID} is left to the engineer to supply. The example configuration above implements a function that extracts the current user's ID from the JSON Web Token (JWT) included in the HTTP request headers.
+Since determining the current user's ID is application specific, the \lstinline{GetUserID} is left for the engineer to supply. The example configuration above implements a function that extracts the current user's ID from the JSON Web Token (JWT) included in the HTTP request headers.
 
-Constructing an authentication message oftentimes needs more context than supplied in the HTTP request. The \lstinline{ContextGetters} is a collection of context getter functions written by the engineer. Essentially, they retrieve supplemental information needed to generate the authentication message of a protected HTTP request in a human-readable form. When setting up routes to protect, there is a clean way in the domain specific language to invoke these functions to fetch more context as needed.
+Constructing an authentication message oftentimes needs more context than that which is supplied the HTTP request payload. The \lstinline{ContextGetters} is a collection of context getter functions written by the engineer. Essentially, they retrieve supplemental information needed to generate the authentication message of a protected HTTP request in a human-readable form. When setting up routes to protect, there is a clean way in the domain specific language to invoke these functions to fetch more context as needed.
 
 
 
@@ -370,9 +370,9 @@ An HTTP request may contain and encode its payload in a variety of ways. \sys{} 
 
 \item \lstinline{GetJSONInput}: Parses JSON request payloads.
 
-\item \lstinline{GetURLInput}: Parses values stored in the HTTP request url. An example would be \lstinline{"/user/comment/6"} parsing the comment ID \lstinline{6} from the URL.
+\item \lstinline{GetURLInput}: Parses values stored in the HTTP request url. An example would be \lstinline{"/user/comment/2"} parsing the comment ID \lstinline{2} from the URL.
 
-\item \lstinline{GetURLParamInput}: Parses parameters passed along with the HTTP request url. An example would be \lstinline{"/user/comment?id=9"} parsing the comment ID \lstinline{9} from the URL.
+\item \lstinline{GetURLParamInput}: Parses parameters passed along with the HTTP request url. An example would be \lstinline{"/user/comment?id=7"} parsing the comment ID \lstinline{7} from the URL.
 
 \end{itemize}
 
@@ -380,10 +380,12 @@ An HTTP request may contain and encode its payload in a variety of ways. \sys{} 
 
 %% TODO maybe include some image, incoming ID in request, firewall gets context
 
-When an HTTP request contains non-human friendly identifiers that need to be understood by the user, those identifiers must be translated to their human readable counterparts. For example, an ID identifies a user's comment to a blog post in the Conduit application. Showing the ID in an authentication message is meaningless to the user. So rather the ID must be translated to the comment's title, which the user can comprehend. This translation is handled by context getter functions programmed by the engineer. Generally, fetching context involves querying the backend for the extra information. This is necessary whenever the frontend does not have complete context of the items it displays. 
+When an HTTP request contains non-human friendly identifiers that need to be understood by the user, those identifiers must be translated to their human-readable counterparts. For example, an ID identifies a user's comment to a blog post in the Conduit application. Showing the ID in an authentication message is meaningless to the user. So rather the ID must be translated to the comment's title, which the user can comprehend. This translation is handled by context getter functions programmed by the engineer. Generally, fetching context involves querying the backend for the extra information. This is necessary whenever the contents of an HTTP request payload is not human-readable.
 
 %% 
 %% \iffalse
+%% do not have complete context of the payloads they contain. 
+
 %% The following is a summarized code snippet of the Conduit comment context getter that accesses the backend.
 
 %% \begin{lstlisting}
@@ -468,7 +470,7 @@ The common case is to write a domain specific program to implement the handler f
 
 The purpose of a domain specific program is to generate the expected authentication message of a transaction authentication event. Section~\ref{Sec:AuthenticationMessage} explains in more detail how the authentication message should be formatted. 
 
-The first argument of the \lstinline{Authn} function is the authentication message format string with format tags such as \lstinline{"%v"}. The rest of the arguments make up the domain specific program. The DSL provides an assortment of operations. Some operations replace the format tags in order. Other operations do not affect the format string, but rather facilitate language functionality.
+The first argument of the \lstinline{Authn} function is the authentication message format string with format tags such as \lstinline{"%v"}. The rest of the arguments make up the domain specific program. The DSL provides an assortment of operations. Some operations replace the format tags in order. Other operations do not affect the format string, but rather facilitate DSL functionality.
 
   %% TODO: Maybe move this code snippet after the specification
 The following code snippet is an example of how the \lstinline{Authn} function is used to write a simple domain specific program. Code Snippet~\ref{code:DSLleaveRepository} transaction authenticates the route for a Gogs user leaving a Gogs repository as a collaborator. Code Snippet~\ref{code:leaveRepositoryRequest} describes a possible request sent to this route.
@@ -692,7 +694,7 @@ The engineer must specify the authentication message format for every request ro
 %% \fi
 %% 
 
-The message generated by \sys{} should encapsulate the entire intent of the request in order to have good security guarantees. All of the parameters in the requests that are considered security sensitive must appear unambiguously in the authentication message in a human readable format. Unambiguity refers to how no two different requests should share the same authentication message. Human readability is paramount since the user is the one authenticating the message and sometimes the parameters in the request may be not human intelligible such as item IDs, etc. The context retrieval functions from Section~\ref{Sec:ContextRetrieval} makes these identifiers into their human readable counterparts.
+The message generated by \sys{} should encapsulate the entire intent of the request in order to have good security guarantees. All of the parameters in the requests that are considered security sensitive must appear unambiguously in the authentication message in a human-readable format. Unambiguity refers to how no two different requests should share the same authentication message. Human-readability is paramount since the user is the one authenticating the message and sometimes the parameters in the request may be not human intelligible such as item IDs, etc. The context retrieval functions from Section~\ref{Sec:ContextRetrieval} makes these identifiers into their human-readable counterparts.
 
 \section{Frontend Modifications}
 

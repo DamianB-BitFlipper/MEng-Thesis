@@ -9,6 +9,7 @@
 *.blg
 *.bbl
 *.fls
+*.out
 *.fdb_latexmk
 .#*
 \#*
